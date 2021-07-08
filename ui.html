@@ -1,0 +1,164 @@
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/purecss@2.0.6/build/pure-min.css"
+  integrity="sha384-Uu6IeWbM+gzNVXJcM9XV3SohHtmWE+3VGi496jvgX1jyvDTXfdK+rfZc8C1Aehk5"
+  crossorigin="anonymous"
+/>
+<canvas id="canvas" width="600" height="400"></canvas>
+<div id="config"></div>
+<script type="module">
+  import { h, render, Component } from 'https://unpkg.com/preact?module';
+  import initModule from './libapi.mjs';
+
+  const { Context } = await initModule();
+  let context = await new Context();
+
+  let queue = Promise.resolve();
+
+  function scheduleOp(op) {
+    let res = queue.then(op);
+    queue = res.catch(() => {});
+    return res;
+  }
+
+  function renderConfig(config, inProgress) {
+    let { id: key, type, label } = config;
+    if (type === 'window' || type === 'section') {
+      return h(
+        'fieldset',
+        { key },
+        h('legend', {}, label),
+        ...config.children.map(child => renderConfig(child, inProgress))
+      );
+    }
+    let { name, value, readonly } = config;
+    let attrs = {
+      id: `config-${name}`,
+      value,
+      readonly,
+      'data-id': key,
+      disabled: inProgress
+    };
+    let inputElem;
+    switch (type) {
+      case 'range': {
+        let { min, max, step } = config;
+        inputElem = h('input', {
+          type: 'number',
+          min,
+          max,
+          step,
+          ...attrs
+        });
+        break;
+      }
+      case 'text':
+        inputElem = readonly ? value : h('input', attrs);
+        break;
+      case 'toggle': {
+        let { value, ...otherAttrs } = attrs;
+        inputElem = h('input', {
+          type: 'checkbox',
+          checked: value,
+          ...otherAttrs
+        });
+        break;
+      }
+      case 'menu':
+      case 'radio': {
+        let { choices } = config;
+        inputElem = h(
+          'select',
+          attrs,
+          choices.map(choice =>
+            h(
+              'option',
+              { value: choice, disabled: attrs.readonly && value !== choice },
+              choice
+            )
+          )
+        );
+        break;
+      }
+    }
+    return h(
+      'div',
+      { class: 'pure-control-group' },
+      h('label', { for: attrs.id }, label),
+      inputElem
+    );
+  }
+
+  class Settings extends Component {
+    state = { inProgress: false, config: null };
+
+    constructor() {
+      super();
+      this.refreshConfig();
+    }
+
+    handleInput = async ({ target }) => {
+      let id = +target.dataset.id;
+      let value;
+      switch (target.type) {
+        case 'checkbox':
+          value = target.checked;
+          break;
+        case 'number':
+          value = target.valueAsNumber;
+          break;
+        default:
+          value = target.value;
+          break;
+      }
+
+      this.setState({ inProgress: true });
+
+      try {
+        await scheduleOp(async () => {
+          await context.setConfigValue(id, value);
+        });
+      } catch (e) {
+        console.error(e);
+      }
+
+      await this.refreshConfig();
+    };
+
+    async refreshConfig() {
+      this.setState({
+        inProgress: false,
+        config: await scheduleOp(() => context.configToJS())
+      });
+    }
+
+    render(props, { config, inProgress }) {
+      return h(
+        'form',
+        { class: 'pure-form pure-form-aligned', onInput: this.handleInput },
+        config && renderConfig(config, inProgress)
+      );
+    }
+  }
+
+  render(h(Settings), document.getElementById('config'));
+
+  (async () => {
+    let canvas = document.getElementById('canvas');
+    let ctx = canvas.getContext('bitmaprenderer');
+
+    while (true) {
+      try {
+        let blob = await scheduleOp(() => context.capturePreviewAsBlob());
+        let img = await createImageBitmap(blob, {
+          resizeWidth: canvas.width,
+          resizeHeight: canvas.height
+        });
+        ctx.transferFromImageBitmap(img);
+      } catch (e) {
+        console.warn(e);
+      }
+      await new Promise(resolve => requestAnimationFrame(resolve));
+    }
+  })();
+</script>
