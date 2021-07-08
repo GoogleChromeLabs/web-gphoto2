@@ -4,16 +4,29 @@
   integrity="sha384-Uu6IeWbM+gzNVXJcM9XV3SohHtmWE+3VGi496jvgX1jyvDTXfdK+rfZc8C1Aehk5"
   crossorigin="anonymous"
 />
-<canvas id="canvas" width="600" height="400"></canvas>
-<div id="config"></div>
+<div class="pure-g" style="height: 100%">
+  <div class="pure-u-2-3" id="canvas-holder" style="max-height: 100%">
+    <canvas id="canvas" style="display: flex; margin: auto"></canvas>
+  </div>
+  <div
+    id="config"
+    class="pure-u-1-3"
+    style="max-height: 100%; overflow-y: auto"
+  ></div>
+</div>
 <script type="module">
   import { h, render, Component } from 'https://unpkg.com/preact?module';
   import initModule from './libapi.mjs';
 
-  const { Context } = await initModule();
-  let context = await new Context();
-
-  let queue = Promise.resolve();
+  let context;
+  let queue = initModule()
+    .then(Module => new Module.Context())
+    .then(ctx => {
+      context = ctx;
+      addEventListener('beforeunload', e => {
+        context.delete();
+      });
+    });
 
   function scheduleOp(op) {
     let res = queue.then(op);
@@ -21,35 +34,32 @@
     return res;
   }
 
-  function renderConfig(config, inProgress) {
-    let { id: key, type, label } = config;
+  function Config({ config, inProgress }) {
+    let { type, label, name } = config;
+    let id = `config-${name}`;
     if (type === 'window' || type === 'section') {
       return h(
         'fieldset',
-        { key },
+        { key: name, id },
         h('legend', {}, label),
-        ...config.children.map(child => renderConfig(child, inProgress))
+        ...config.children.map(child =>
+          h(Config, { config: child, inProgress })
+        )
       );
     }
-    let { name, value, readonly } = config;
+    let { value, readonly } = config;
+    if (name === 'whitebalance') console.log('Got whitebalance', value);
     let attrs = {
-      id: `config-${name}`,
+      id,
       value,
       readonly,
-      'data-id': key,
       disabled: inProgress
     };
     let inputElem;
     switch (type) {
       case 'range': {
         let { min, max, step } = config;
-        inputElem = h('input', {
-          type: 'number',
-          min,
-          max,
-          step,
-          ...attrs
-        });
+        inputElem = h('input', { type: 'number', min, max, step, ...attrs });
         break;
       }
       case 'text':
@@ -83,41 +93,52 @@
     }
     return h(
       'div',
-      { class: 'pure-control-group' },
-      h('label', { for: attrs.id }, label),
+      { class: 'pure-control-group', key: name },
+      h('label', { for: id }, label),
       inputElem
     );
   }
 
   class Settings extends Component {
-    state = { inProgress: false, config: null };
+    state = { inProgress: true, config: 'Connecting...' };
 
     constructor() {
       super();
-      this.refreshConfig();
+      (async () => {
+        while (true) {
+          await this.refreshConfig();
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      })();
     }
 
-    handleInput = async ({ target }) => {
-      let id = +target.dataset.id;
+    setStatePromise(state) {
+      return new Promise(resolve => this.setState(state, resolve));
+    }
+
+    handleInput = async e => {
+      let name = e.target.id;
+      if (!name.startsWith('config-')) {
+        throw new Error('Unhandled input');
+      }
+      name = name.slice('config-'.length);
       let value;
-      switch (target.type) {
+      switch (e.target.type) {
         case 'checkbox':
-          value = target.checked;
+          value = e.target.checked;
           break;
         case 'number':
-          value = target.valueAsNumber;
+          value = e.target.valueAsNumber;
           break;
         default:
-          value = target.value;
+          value = e.target.value;
           break;
       }
 
-      this.setState({ inProgress: true });
+      await this.setStatePromise({ inProgress: true });
 
       try {
-        await scheduleOp(async () => {
-          await context.setConfigValue(id, value);
-        });
+        await scheduleOp(() => context.setConfigValue(name, value));
       } catch (e) {
         console.error(e);
       }
@@ -126,34 +147,73 @@
     };
 
     async refreshConfig() {
-      this.setState({
+      let config;
+      try {
+        config = await scheduleOp(() => context.configToJS());
+      } catch (e) {
+        config = String(e);
+      }
+      await this.setStatePromise({
         inProgress: false,
-        config: await scheduleOp(() => context.configToJS())
+        config
       });
     }
 
-    render(props, { config, inProgress }) {
-      return h(
-        'form',
-        { class: 'pure-form pure-form-aligned', onInput: this.handleInput },
-        config && renderConfig(config, inProgress)
-      );
+    render(props, state) {
+      return typeof config === 'string'
+        ? config
+        : h(
+            'form',
+            { class: 'pure-form pure-form-aligned', onInput: this.handleInput },
+            h(Config, state)
+          );
     }
   }
 
   render(h(Settings), document.getElementById('config'));
 
   (async () => {
+    await queue;
+
     let canvas = document.getElementById('canvas');
     let ctx = canvas.getContext('bitmaprenderer');
+    let ratio;
 
-    while (true) {
+    while (!context.isDeleted()) {
       try {
         let blob = await scheduleOp(() => context.capturePreviewAsBlob());
-        let img = await createImageBitmap(blob, {
-          resizeWidth: canvas.width,
-          resizeHeight: canvas.height
-        });
+
+        // If ratio is known; decode resized image right away - it's a bit faster.
+        // If it isn't known, retrieve entire image to calculate ratio from its dimensions.
+        let img = await createImageBitmap(
+          blob,
+          typeof ratio === 'undefined'
+            ? {}
+            : {
+                resizeWidth: canvas.width,
+                resizeHeight: canvas.height
+              }
+        );
+        if (typeof ratio === 'undefined') {
+          ratio = img.width / img.height;
+          let canvasHolder = document.getElementById('canvas-holder');
+
+          function updateCanvasSize() {
+            let width = canvasHolder.offsetWidth;
+            let height = canvasHolder.offsetHeight;
+
+            if (height * ratio > width) {
+              height = width / ratio;
+            } else {
+              width = height * ratio;
+            }
+
+            Object.assign(canvas, { width, height });
+          }
+
+          updateCanvasSize();
+          new ResizeObserver(updateCanvasSize).observe(canvasHolder);
+        }
         ctx.transferFromImageBitmap(img);
       } catch (e) {
         console.warn(e);

@@ -7,6 +7,22 @@
 
 using emscripten::val;
 
+template <typename T, int (*Deleter)(T *)>
+void gpp_deleter(T *ptr) {
+  gpp_try(Deleter(ptr));
+}
+
+template <typename T, void (*Deleter)(T *)>
+void gpp_deleter(T *ptr) {
+  Deleter(ptr);
+}
+
+template <typename T, auto Deleter>
+using gpp_unique_ptr =
+    std::unique_ptr<T, std::integral_constant<decltype(Deleter), Deleter>>;
+
+using GPPWidget = gpp_unique_ptr<CameraWidget, gp_widget_unref>;
+
 void gpp_try(int status) {
   if (status != GP_OK) {
     throw std::runtime_error(gp_result_as_string(status));
@@ -42,10 +58,7 @@ const thread_local val Blob = val::global("Blob");
 
 class Context {
  public:
-  Context()
-      : camera(nullptr, gp_camera_unref),
-        context(nullptr, gp_context_unref),
-        config(nullptr, gp_widget_unref) {
+  Context() : camera(nullptr), context(nullptr) {
     gpp_rethrow([=]() {
       camera.reset(GPP_CALL(Camera *, gp_camera_new(_)));
       context.reset(gp_context_new());
@@ -54,48 +67,48 @@ class Context {
     });
   }
 
-  Context(int foo): Context() {}
+  Context(int foo) : Context() {}
 
   val configToJS() {
     return gpp_rethrow([=]() {
-      if (config.get() == nullptr) {
-        config.reset(
-            GPP_CALL(CameraWidget *,
-                     gp_camera_get_config(camera.get(), _, context.get())));
-      }
-
+      GPPWidget config(
+          GPP_CALL(CameraWidget *,
+                   gp_camera_get_config(camera.get(), _, context.get())));
       return walk_config(config.get());
     });
   }
 
-  void setConfigValue(int id, val value) {
+  void setConfigValue(std::string name, val value) {
     gpp_rethrow([=]() {
-      auto widget = GPP_CALL(CameraWidget *,
-                             gp_widget_get_child_by_id(config.get(), id, _));
-      auto type = GPP_CALL(CameraWidgetType, gp_widget_get_type(widget, _));
+      GPPWidget widget(GPP_CALL(
+          CameraWidget *, gp_camera_get_single_config(
+                              camera.get(), name.c_str(), _, context.get())));
+      auto type =
+          GPP_CALL(CameraWidgetType, gp_widget_get_type(widget.get(), _));
       switch (type) {
         case GP_WIDGET_RANGE: {
           float number = value.as<float>();
-          gpp_try(gp_widget_set_value(widget, &number));
+          gpp_try(gp_widget_set_value(widget.get(), &number));
           break;
         }
         case GP_WIDGET_MENU:
         case GP_WIDGET_RADIO:
         case GP_WIDGET_TEXT: {
           auto str = value.as<std::string>();
-          gpp_try(gp_widget_set_value(widget, str.c_str()));
+          gpp_try(gp_widget_set_value(widget.get(), str.c_str()));
           break;
         }
         case GP_WIDGET_TOGGLE: {
           int on = value.as<bool>() ? 1 : 0;
-          gpp_try(gp_widget_set_value(widget, &on));
+          gpp_try(gp_widget_set_value(widget.get(), &on));
           break;
         }
         default: {
           throw std::logic_error("unimplemented");
         }
       }
-      gpp_try(gp_camera_set_config(camera.get(), config.get(), context.get()));
+      gpp_try(gp_camera_set_single_config(camera.get(), name.c_str(),
+                                          widget.get(), context.get()));
     });
   }
 
@@ -137,10 +150,8 @@ class Context {
 
       Output output;
 
-      std::unique_ptr<CameraFile, decltype(&gp_file_unref)> file(
-          GPP_CALL(CameraFile *,
-                   gp_file_new_from_handler(_, &handler, &output)),
-          gp_file_unref);
+      gpp_unique_ptr<CameraFile, gp_file_unref> file(GPP_CALL(
+          CameraFile *, gp_file_new_from_handler(_, &handler, &output)));
 
       gpp_try(
           gp_camera_capture_preview(camera.get(), file.get(), context.get()));
@@ -156,14 +167,12 @@ class Context {
   }
 
  private:
-  std::unique_ptr<Camera, decltype(&gp_camera_unref)> camera;
-  std::unique_ptr<GPContext, decltype(&gp_context_unref)> context;
-  std::unique_ptr<CameraWidget, decltype(&gp_widget_unref)> config;
+  gpp_unique_ptr<Camera, gp_camera_unref> camera;
+  gpp_unique_ptr<GPContext, gp_context_unref> context;
 
   static val walk_config(CameraWidget *widget) {
     val result = val::object();
 
-    result.set("id", GPP_CALL(int, gp_widget_get_id(widget, _)));
     result.set("name", GPP_CALL(const char *, gp_widget_get_name(widget, _)));
     result.set("info", GPP_CALL(const char *, gp_widget_get_info(widget, _)));
     result.set("label", GPP_CALL(const char *, gp_widget_get_label(widget, _)));
