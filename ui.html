@@ -112,7 +112,7 @@
   }
 
   class Settings extends Component {
-    state = { inProgress: true, config: 'Connecting...' };
+    state = { inProgress: false, config: 'Connecting...' };
 
     constructor() {
       super();
@@ -122,10 +122,6 @@
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       })();
-    }
-
-    setStatePromise(state) {
-      return new Promise(resolve => this.setState(state, resolve));
     }
 
     handleInput = async e => {
@@ -147,7 +143,7 @@
           break;
       }
 
-      await this.setStatePromise({ inProgress: true });
+      this.setState({ inProgress: true });
 
       try {
         await scheduleOp(() => context.setConfigValue(name, value));
@@ -156,6 +152,7 @@
       }
 
       await this.refreshConfig();
+      this.setState({ inProgress: false });
     };
 
     async refreshConfig() {
@@ -165,8 +162,7 @@
       } catch (e) {
         config = String(e);
       }
-      await this.setStatePromise({
-        inProgress: false,
+      this.setState({
         config
       });
     }
