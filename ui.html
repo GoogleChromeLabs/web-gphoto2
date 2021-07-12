@@ -14,9 +14,22 @@
     style="max-height: 100%; overflow-y: auto"
   ></div>
 </div>
+<script type="importmap">
+{
+  "imports": {
+    "preact": "https://unpkg.com/preact/dist/preact.module.js",
+    "preact/debug": "https://unpkg.com/preact/debug/dist/debug.module.js",
+    "preact/devtools": "https://unpkg.com/preact@10.5.14/devtools/dist/devtools.module.js"
+  }
+}
+</script>
 <script type="module">
-  import { h, render, Component } from 'https://unpkg.com/preact?module';
+  import { h, render, Component } from 'preact';
   import initModule from './libapi.mjs';
+
+  if (new URLSearchParams(location.search).has('debug')) {
+    await import('preact/debug');
+  }
 
   let context;
   let queue = initModule()
@@ -40,10 +53,10 @@
     if (type === 'window' || type === 'section') {
       return h(
         'fieldset',
-        { key: name, id },
+        { id },
         h('legend', {}, label),
-        ...config.children.map(child =>
-          h(Config, { config: child, inProgress })
+        Object.values(config.children).map(config =>
+          h(Config, { key: config.name, config, inProgress })
         )
       );
     }
@@ -92,7 +105,7 @@
     }
     return h(
       'div',
-      { class: 'pure-control-group', key: name },
+      { class: 'pure-control-group' },
       h('label', { for: id }, label),
       inputElem
     );

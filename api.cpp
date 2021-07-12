@@ -74,7 +74,7 @@ class Context {
       GPPWidget config(
           GPP_CALL(CameraWidget *,
                    gp_camera_get_config(camera.get(), _, context.get())));
-      return walk_config(config.get());
+      return walk_config(config.get()).second;
     });
   }
 
@@ -170,10 +170,11 @@ class Context {
   gpp_unique_ptr<Camera, gp_camera_unref> camera;
   gpp_unique_ptr<GPContext, gp_context_unref> context;
 
-  static val walk_config(CameraWidget *widget) {
+  static std::pair<val, val> walk_config(CameraWidget *widget) {
     val result = val::object();
 
-    result.set("name", GPP_CALL(const char *, gp_widget_get_name(widget, _)));
+    val name(GPP_CALL(const char *, gp_widget_get_name(widget, _)));
+    result.set("name", name);
     result.set("info", GPP_CALL(const char *, gp_widget_get_info(widget, _)));
     result.set("label", GPP_CALL(const char *, gp_widget_get_label(widget, _)));
     result.set("readonly",
@@ -227,11 +228,12 @@ class Context {
       case GP_WIDGET_SECTION: {
         result.set("type", type == GP_WIDGET_WINDOW ? "window" : "section");
 
-        val children = val::array();
+        val children = val::object();
         for (int i = 0, n = gp_widget_count_children(widget); i < n; i++) {
           auto child =
               GPP_CALL(CameraWidget *, gp_widget_get_child(widget, i, _));
-          children.call<void>("push", walk_config(child));
+          auto kv = walk_config(child);
+          children.set(kv.first, kv.second);
         }
         result.set("children", children);
 
@@ -242,7 +244,7 @@ class Context {
       }
     }
 
-    return result;
+    return {name, result};
   }
 };
 
