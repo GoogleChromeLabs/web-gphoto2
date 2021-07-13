@@ -73,9 +73,14 @@
       );
     }
     let { value, readonly } = config;
+    let valueProp = type === 'toggle' ? 'checked' : 'value';
+    // We don't want to override current input's value while user is editing it.
+    if (document.activeElement?.id === id) {
+      value = document.activeElement?.[valueProp];
+    }
     let attrs = {
       id,
-      value,
+      [valueProp]: value,
       readonly,
       disabled: inProgress
     };
@@ -90,11 +95,9 @@
         inputElem = readonly ? value : h('input', attrs);
         break;
       case 'toggle': {
-        let { value, ...otherAttrs } = attrs;
         inputElem = h('input', {
           type: 'checkbox',
-          checked: value,
-          ...otherAttrs
+          ...attrs
         });
         break;
       }
@@ -124,23 +127,17 @@
   }
 
   class Settings extends Component {
-    state = { pauseUpdates: false, inProgress: false, config: 'Connecting...' };
+    state = { inProgress: false, config: 'Connecting...' };
 
     constructor() {
       super();
       (async () => {
         while (true) {
-          if (!this.state.pauseUpdates) {
-            await this.refreshConfig();
-          }
+          await this.refreshConfig();
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       })();
     }
-
-    pauseUpdates = () => this.setState({ pauseUpdates: true });
-
-    resumeUpdates = () => this.setState({ pauseUpdates: false });
 
     handleChange = async e => {
       let name = e.target.id;
@@ -207,7 +204,7 @@
     await queue;
 
     // I have no idea why, but if we connect too soon, it just hangs...
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     let canvas = document.getElementById('canvas');
     let ctx = canvas.getContext('bitmaprenderer');
