@@ -1,27 +1,39 @@
+<!DOCTYPE html>
 <link
   rel="stylesheet"
   href="https://unpkg.com/purecss@2.0.6/build/pure-min.css"
-  integrity="sha384-Uu6IeWbM+gzNVXJcM9XV3SohHtmWE+3VGi496jvgX1jyvDTXfdK+rfZc8C1Aehk5"
-  crossorigin="anonymous"
 />
-<div class="pure-g" style="height: 100%">
-  <div class="pure-u-2-3" id="canvas-holder" style="max-height: 100%">
+<style>
+  #config label {
+    max-width: 40%;
+  }
+
+  #config select {
+    max-width: 50%;
+  }
+
+  #canvas-holder, #config {
+    max-height: 100vh;
+  }
+</style>
+<div class="pure-g">
+  <div class="pure-u-2-3" id="canvas-holder">
     <canvas id="canvas" style="display: flex; margin: auto"></canvas>
   </div>
   <div
     id="config"
     class="pure-u-1-3"
-    style="max-height: 100%; overflow-y: auto"
+    style="overflow-y: auto"
   ></div>
 </div>
 <script type="importmap">
-{
-  "imports": {
-    "preact": "https://unpkg.com/preact/dist/preact.module.js",
-    "preact/debug": "https://unpkg.com/preact/debug/dist/debug.module.js",
-    "preact/devtools": "https://unpkg.com/preact@10.5.14/devtools/dist/devtools.module.js"
+  {
+    "imports": {
+      "preact": "https://unpkg.com/preact/dist/preact.module.js",
+      "preact/debug": "https://unpkg.com/preact/debug/dist/debug.module.js",
+      "preact/devtools": "https://unpkg.com/preact@10.5.14/devtools/dist/devtools.module.js"
+    }
   }
-}
 </script>
 <script type="module">
   import { h, render, Component } from 'preact';
@@ -112,19 +124,25 @@
   }
 
   class Settings extends Component {
-    state = { inProgress: false, config: 'Connecting...' };
+    state = { pauseUpdates: false, inProgress: false, config: 'Connecting...' };
 
     constructor() {
       super();
       (async () => {
         while (true) {
-          await this.refreshConfig();
+          if (!this.state.pauseUpdates) {
+            await this.refreshConfig();
+          }
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       })();
     }
 
-    handleInput = async e => {
+    pauseUpdates = () => this.setState({ pauseUpdates: true });
+
+    resumeUpdates = () => this.setState({ pauseUpdates: false });
+
+    handleChange = async e => {
       let name = e.target.id;
       if (!name.startsWith('config-')) {
         throw new Error('Unhandled input');
@@ -172,7 +190,12 @@
         ? config
         : h(
             'form',
-            { class: 'pure-form pure-form-aligned', onInput: this.handleInput },
+            {
+              class: 'pure-form pure-form-aligned',
+              onfocusin: this.pauseUpdates,
+              onfocusout: this.resumeUpdates,
+              onchange: this.handleChange
+            },
             h(Config, state)
           );
     }
@@ -182,6 +205,9 @@
 
   (async () => {
     await queue;
+
+    // I have no idea why, but if we connect too soon, it just hangs...
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     let canvas = document.getElementById('canvas');
     let ctx = canvas.getContext('bitmaprenderer');
@@ -207,7 +233,7 @@
           let canvasHolder = document.getElementById('canvas-holder');
 
           function updateCanvasSize() {
-            let width = canvasHolder.offsetWidth;
+            let width = canvasHolder.offsetWidth - 10;
             let height = canvasHolder.offsetHeight;
 
             if (height * ratio > width) {
