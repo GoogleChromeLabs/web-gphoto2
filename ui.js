@@ -1,4 +1,4 @@
-import { h, render, Component } from 'preact';
+import { h, render, Component, createRef } from 'preact';
 import initModule from './libapi.mjs';
 
 /** @typedef {InstanceType<import('./libapi.mjs').Module['Context']>} Context */
@@ -47,108 +47,166 @@ const scheduleOp = (() => {
 
 /**
  *
- * @param {{
- *  config: Config,
- *  inProgress: boolean,
- * }} params
- * @returns {import('preact').VNode<any>}
+ * @extends Component<{ config: Config }>
  */
-function Config({ config, inProgress }) {
-  let { label, name } = config;
-  let id = `config-${name}`;
-  if (config.type === 'window' || config.type === 'section') {
-    return h(
-      'fieldset',
-      { id },
-      h('legend', {}, label),
-      Object.values(config.children).map(config =>
-        h(Config, { key: config.name, config, inProgress })
-      )
-    );
+class ConfigComponent extends Component {
+  state = { inProgress: false };
+
+  shouldComponentUpdate(
+    /** @type {ConfigComponent['props']} */ nextProps,
+    /** @type {ConfigComponent['state']} */ nextState
+  ) {
+    return !(this.state.inProgress && nextState.inProgress);
   }
-  let { value, readonly } = config;
-  let valueProp;
-  switch (config.type) {
-    case 'toggle':
-      valueProp = 'checked';
-      break;
-    case 'range':
-    case 'datetime':
-      valueProp = 'valueAsNumber';
-      break;
-    default:
-      valueProp = 'value';
-  }
-  // We don't want to override current input's value while user is editing it.
-  if (document.activeElement?.id === id) {
-    // @ts-ignore
-    value = document.activeElement?.[valueProp];
-  }
-  let attrs = {
-    id,
-    [valueProp]: value,
-    readonly,
-    disabled: inProgress
-  };
-  let inputElem;
-  switch (config.type) {
-    case 'range': {
-      let { min, max, step } = config;
-      inputElem = h('input', { type: 'number', min, max, step, ...attrs });
-      break;
+
+  getValueProp() {
+    switch (this.props.config.type) {
+      case 'toggle':
+        return 'checked';
+      case 'datetime':
+        return 'valueAsNumber';
+      default:
+        return 'value';
     }
-    case 'text':
-      inputElem = readonly ? value : h('input', attrs);
-      break;
-    case 'toggle': {
-      inputElem = h('input', {
-        type: 'checkbox',
-        ...attrs
+  }
+
+  handleChange = async e => {
+    this.setState({ inProgress: true });
+
+    let value = e.target[this.getValueProp()];
+
+    try {
+      /** @type {Promise<void>} */
+      let uiTimeout;
+      await scheduleOp(context => {
+        // This is terrible, yes... but some configs return too quickly before they're actually updated.
+        // We want to wait some time before updating the UI in that case, but not block subsequent ops.
+        uiTimeout = new Promise(resolve => setTimeout(resolve, 800));
+        return context.setConfigValue(this.props.config.name, value);
       });
-      break;
+      await uiTimeout;
+    } catch (e) {
+      console.error(e);
     }
-    case 'menu':
-    case 'radio': {
-      let { choices } = config;
-      inputElem = h(
-        'select',
-        attrs,
-        choices.map(choice =>
-          h(
-            'option',
-            {
+
+    this.setState({ inProgress: false });
+  };
+
+  render(
+    /** @type {ConfigComponent['props']} */ { config },
+    /** @type {ConfigComponent['state']} */ { inProgress }
+  ) {
+    let { label, name } = config;
+    let id = `config-${name}`;
+    if (config.type === 'window' || config.type === 'section') {
+      return h(
+        'fieldset',
+        { id },
+        h('legend', {}, label),
+        Object.values(config.children).map(config =>
+          h(ConfigComponent, { key: config.name, config })
+        )
+      );
+    }
+    let { value, readonly } = config;
+    let valueProp = this.getValueProp();
+    let attrs = {
+      id,
+      [valueProp]: value,
+      readonly: readonly || inProgress,
+      onChange: this.handleChange
+    };
+    let inputElem;
+    switch (config.type) {
+      case 'range': {
+        let { min, max, step } = config;
+        inputElem = h(EditableInput, {
+          type: 'number',
+          min,
+          max,
+          step,
+          ...attrs
+        });
+        break;
+      }
+      case 'text':
+        inputElem = readonly ? value : h(EditableInput, attrs);
+        break;
+      case 'toggle': {
+        inputElem = h('input', {
+          type: 'checkbox',
+          ...attrs
+        });
+        break;
+      }
+      case 'menu':
+      case 'radio': {
+        let { choices } = config;
+        inputElem = h(
+          'select',
+          attrs,
+          choices.map(choice =>
+            h(Option, {
               key: choice,
               value: choice,
               disabled: attrs.readonly && value !== choice
-            },
-            choice
+            })
           )
-        )
-      );
-      break;
+        );
+        break;
+      }
+      case 'datetime': {
+        inputElem = h(EditableInput, {
+          type: 'datetime-local',
+          ...attrs
+        });
+        break;
+      }
+      default: {
+        inputElem = '(unimplemented)';
+        break;
+      }
     }
-    case 'datetime': {
-      inputElem = h('input', {
-        type: 'datetime-local',
-        ...attrs
-      });
-      break;
-    }
-    default: {
-      inputElem = '(unimplemented)';
-      break;
-    }
+    return h(
+      'div',
+      { class: 'pure-control-group' },
+      h('label', { for: id }, (inProgress ? '⌛ ' : '') + label),
+      inputElem
+    );
   }
-  return h(
-    'div',
-    { class: 'pure-control-group' },
-    h('label', { for: id }, label),
-    inputElem
-  );
+}
+
+/**
+ * Special memoized option to work around https://github.com/preactjs/preact/issues/3171.
+ * @extends Component<{ value: string, disabled?: boolean }>
+ */
+class Option extends Component {
+  shouldComponentUpdate(/** @type {Option['props']} */ nextProps) {
+    return nextProps.value !== this.props.value;
+  }
+
+  render() {
+    return h('option', this.props, this.props.value);
+  }
+}
+
+/**
+ * Wrapper around <input /> that doesn't update it while it's in focus to allow editing.
+ */
+class EditableInput extends Component {
+  ref = createRef();
+
+  shouldComponentUpdate() {
+    return document.activeElement !== this.ref.current;
+  }
+
+  render(props) {
+    return h('input', Object.assign(props, { ref: this.ref }));
+  }
 }
 
 class Settings extends Component {
-  state = { inProgress: false, config: 'Connecting...' };
+  state = { config: 'Connecting...' };
 
   constructor() {
     super();
@@ -159,38 +217,6 @@ class Settings extends Component {
       }
     })();
   }
-
-  handleChange = async e => {
-    let name = e.target.id;
-    if (!name.startsWith('config-')) {
-      throw new Error('Unhandled input');
-    }
-    name = name.slice('config-'.length);
-    let value;
-    switch (e.target.type) {
-      case 'checkbox':
-        value = e.target.checked;
-        break;
-      case 'number':
-      case 'datetime-local':
-        value = e.target.valueAsNumber;
-        break;
-      default:
-        value = e.target.value;
-        break;
-    }
-
-    this.setState({ inProgress: true });
-
-    try {
-      await scheduleOp(context => context.setConfigValue(name, value));
-    } catch (e) {
-      console.error(e);
-    }
-
-    await this.refreshConfig();
-    this.setState({ inProgress: false });
-  };
 
   async refreshConfig() {
     let config;
@@ -218,16 +244,13 @@ class Settings extends Component {
       ? state.config
       : h(
           'form',
-          {
-            class: 'pure-form pure-form-aligned',
-            onchange: this.handleChange
-          },
+          { class: 'pure-form pure-form-aligned' },
           h('input', {
             type: 'button',
             value: 'Capture image',
             onclick: this.handleCapture
           }),
-          h(Config, state)
+          h(ConfigComponent, state)
         );
   }
 }
