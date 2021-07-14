@@ -1,293 +1,42 @@
 <!DOCTYPE html>
-<link
-  rel="stylesheet"
-  href="https://unpkg.com/purecss@2.0.6/build/pure-min.css"
-  crossorigin="anonymous"
-/>
-<style>
-  #config label {
-    max-width: 40%;
-  }
-
-  #config select {
-    max-width: 50%;
-  }
-
-  #canvas-holder,
-  #config {
-    max-height: 100vh;
-  }
-</style>
-<div class="pure-g">
-  <div class="pure-u-2-3" id="canvas-holder">
-    <canvas id="canvas" style="display: flex; margin: auto"></canvas>
-  </div>
-  <div id="config" class="pure-u-1-3" style="overflow-y: auto"></div>
-</div>
-<script type="importmap">
-  {
-    "imports": {
-      "preact": "https://unpkg.com/preact/dist/preact.module.js",
-      "preact/debug": "https://unpkg.com/preact/debug/dist/debug.module.js",
-      "preact/devtools": "https://unpkg.com/preact@10.5.14/devtools/dist/devtools.module.js"
-    }
-  }
-</script>
-<script type="module">
-  import { h, render, Component } from 'preact';
-  import initModule from './libapi.mjs';
-
-  if (new URLSearchParams(location.search).has('debug')) {
-    await import('preact/debug');
-  }
-
-  let context;
-  let queue = initModule()
-    .then(Module => new Module.Context())
-    .then(ctx => {
-      context = ctx;
-      addEventListener('beforeunload', e => {
-        context.delete();
-      });
-    });
-
-  function scheduleOp(op) {
-    let res = queue.then(op);
-    queue = res.catch(() => {});
-    return res;
-  }
-
-  function Config({ config, inProgress }) {
-    let { type, label, name } = config;
-    let id = `config-${name}`;
-    if (type === 'window' || type === 'section') {
-      return h(
-        'fieldset',
-        { id },
-        h('legend', {}, label),
-        Object.values(config.children).map(config =>
-          h(Config, { key: config.name, config, inProgress })
-        )
-      );
-    }
-    let { value, readonly } = config;
-    let valueProp;
-    switch (type) {
-      case 'toggle':
-        valueProp = 'checked';
-        break;
-      case 'datetime':
-        valueProp = 'valueAsNumber';
-        break;
-      default:
-        valueProp = 'value';
-    }
-    // We don't want to override current input's value while user is editing it.
-    if (document.activeElement?.id === id) {
-      value = document.activeElement?.[valueProp];
-    }
-    let attrs = {
-      id,
-      [valueProp]: value,
-      readonly,
-      disabled: inProgress
-    };
-    let inputElem;
-    switch (type) {
-      case 'range': {
-        let { min, max, step } = config;
-        inputElem = h('input', { type: 'number', min, max, step, ...attrs });
-        break;
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/purecss@2.0.6/build/pure-min.css"
+      crossorigin="anonymous"
+    />
+    <style>
+      #config label {
+        max-width: 40%;
       }
-      case 'text':
-        inputElem = readonly ? value : h('input', attrs);
-        break;
-      case 'toggle': {
-        inputElem = h('input', {
-          type: 'checkbox',
-          ...attrs
-        });
-        break;
-      }
-      case 'menu':
-      case 'radio': {
-        let { choices } = config;
-        inputElem = h(
-          'select',
-          attrs,
-          choices.map(choice =>
-            h(
-              'option',
-              {
-                key: choice,
-                value: choice,
-                disabled: attrs.readonly && value !== choice
-              },
-              choice
-            )
-          )
-        );
-        break;
-      }
-      case 'datetime': {
-        inputElem = h('input', {
-          type: 'datetime-local',
-          ...attrs
-        });
-        break;
-      }
-      default: {
-        inputElem = '(unimplemented)';
-        break;
-      }
-    }
-    return h(
-      'div',
-      { class: 'pure-control-group' },
-      h('label', { for: id }, label),
-      inputElem
-    );
-  }
 
-  class Settings extends Component {
-    state = { inProgress: false, config: 'Connecting...' };
+      #config select {
+        max-width: 50%;
+      }
 
-    constructor() {
-      super();
-      (async () => {
-        while (true) {
-          await this.refreshConfig();
-          await new Promise(resolve => setTimeout(resolve, 100));
+      #canvas-holder,
+      #config {
+        max-height: 100vh;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "preact": "https://unpkg.com/preact/dist/preact.module.js",
+          "preact/debug": "https://unpkg.com/preact/debug/dist/debug.module.js",
+          "preact/devtools": "https://unpkg.com/preact@10.5.14/devtools/dist/devtools.module.js"
         }
-      })();
-    }
-
-    handleChange = async e => {
-      let name = e.target.id;
-      if (!name.startsWith('config-')) {
-        throw new Error('Unhandled input');
       }
-      name = name.slice('config-'.length);
-      let value;
-      switch (e.target.type) {
-        case 'checkbox':
-          value = e.target.checked;
-          break;
-        case 'number':
-        case 'datetime-local':
-          value = e.target.valueAsNumber;
-          break;
-        default:
-          value = e.target.value;
-          break;
-      }
-
-      this.setState({ inProgress: true });
-
-      try {
-        await scheduleOp(() => context.setConfigValue(name, value));
-      } catch (e) {
-        console.error(e);
-      }
-
-      await this.refreshConfig();
-      this.setState({ inProgress: false });
-    };
-
-    async refreshConfig() {
-      let config;
-      try {
-        config = await scheduleOp(() => context.configToJS());
-      } catch (e) {
-        config = String(e);
-      }
-      this.setState({
-        config
-      });
-    }
-
-    handleCapture = async () => {
-      let file = await scheduleOp(() => context.captureImageAsFile());
-      let a = document.createElement('a');
-      a.download = file.name;
-      a.href = URL.createObjectURL(file);
-      a.click();
-      URL.revokeObjectURL(a.href);
-    };
-
-    render(props, { config }) {
-      return typeof config === 'string'
-        ? config
-        : h(
-            'form',
-            {
-              class: 'pure-form pure-form-aligned',
-              onfocusin: this.pauseUpdates,
-              onfocusout: this.resumeUpdates,
-              onchange: this.handleChange
-            },
-            h('input', {
-              type: 'button',
-              value: 'Capture image',
-              onclick: this.handleCapture
-            }),
-            h(Config, state)
-          );
-    }
-  }
-
-  render(h(Settings), document.getElementById('config'));
-
-  (async () => {
-    await queue;
-
-    // I have no idea why, but if we connect too soon, it just hangs...
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    let canvas = document.getElementById('canvas');
-    let ctx = canvas.getContext('bitmaprenderer');
-    let ratio;
-
-    while (!context.isDeleted()) {
-      try {
-        let blob = await scheduleOp(() => context.capturePreviewAsBlob());
-
-        // If ratio is known; decode resized image right away - it's a bit faster.
-        // If it isn't known, retrieve entire image to calculate ratio from its dimensions.
-        let img = await createImageBitmap(
-          blob,
-          typeof ratio === 'undefined'
-            ? {}
-            : {
-                resizeWidth: canvas.width,
-                resizeHeight: canvas.height
-              }
-        );
-        if (typeof ratio === 'undefined') {
-          ratio = img.width / img.height;
-          let canvasHolder = document.getElementById('canvas-holder');
-
-          function updateCanvasSize() {
-            let width = canvasHolder.offsetWidth - 10;
-            let height = canvasHolder.offsetHeight;
-
-            if (height * ratio > width) {
-              height = width / ratio;
-            } else {
-              width = height * ratio;
-            }
-
-            Object.assign(canvas, { width, height });
-          }
-
-          updateCanvasSize();
-          new ResizeObserver(updateCanvasSize).observe(canvasHolder);
-        }
-        ctx.transferFromImageBitmap(img);
-      } catch (e) {
-        console.warn(e);
-      }
-      await new Promise(resolve => requestAnimationFrame(resolve));
-    }
-  })();
-</script>
+    </script>
+    <script type="module" src="ui.js"></script>
+  </head>
+  <body>
+    <div class="pure-g">
+      <div class="pure-u-2-3" id="canvas-holder">
+        <canvas id="canvas" style="display: flex; margin: auto"></canvas>
+      </div>
+      <div id="config" class="pure-u-1-3" style="overflow-y: auto"></div>
+    </div>
+  </body>
+</html>
