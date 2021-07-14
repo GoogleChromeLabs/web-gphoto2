@@ -3,6 +3,7 @@
 #include <emscripten/val.h>
 #include <gphoto2/gphoto2.h>
 
+#include <cstring>
 #include <iostream>
 
 using emscripten::val;
@@ -55,6 +56,8 @@ auto gpp_rethrow(Func func) {
 
 const thread_local val Uint8Array = val::global("Uint8Array");
 const thread_local val Blob = val::global("Blob");
+const thread_local val File = val::global("File");
+const thread_local val arrayOf = val::global("Array")["of"];
 
 class Context {
  public:
@@ -114,61 +117,44 @@ class Context {
 
   val capturePreviewAsBlob() {
     return gpp_rethrow([=]() {
-      class Output {
-       public:
-        Output() : totalSize(0), chunks(val::array()) {}
+      auto &file = get_file();
 
-        void push(const uint8_t *data, unsigned long size) {
-          chunks.call<void>(
-              "push",
-              Uint8Array.new_(emscripten::typed_memory_view(size, data)));
-          totalSize += size;
-        }
+      gpp_try(gp_camera_capture_preview(camera.get(), &file, context.get()));
 
-        uint64_t getTotalSize() { return totalSize; }
+      auto params = blob_chunks_and_opts(file);
+      return Blob.new_(std::move(params.first), std::move(params.second));
+    });
+  }
 
-        val getChunks() { return chunks; }
+  val captureImageAsFile() {
+    return gpp_rethrow([=]() {
+      CameraFilePath camera_file_path;
+      strcpy(camera_file_path.folder, "/");
+      strcpy(camera_file_path.name, "web-gphoto2");
 
-       private:
-        uint64_t totalSize;
-        val chunks;
-      };
+      gpp_try(gp_camera_capture(camera.get(), GP_CAPTURE_IMAGE,
+                                &camera_file_path, context.get()));
 
-      static CameraFileHandler handler = {
-          .size =
-              [](void *priv, uint64_t *size) {
-                *size = static_cast<Output *>(priv)->getTotalSize();
-                return GP_OK;
-              },
-          .read = [](void *priv, unsigned char *data,
-                     uint64_t *len) { return GP_ERROR_NOT_SUPPORTED; },
-          .write =
-              [](void *priv, unsigned char *data, uint64_t *len) {
-                static_cast<Output *>(priv)->push(data, *len);
-                return GP_OK;
-              }};
+      auto &file = get_file();
+      gpp_try(gp_camera_file_get(camera.get(), camera_file_path.folder,
+                                 camera_file_path.name, GP_FILE_TYPE_NORMAL,
+                                 &file, context.get()));
+      gpp_try(gp_camera_file_delete(camera.get(), camera_file_path.folder,
+                                    camera_file_path.name, context.get()));
 
-      Output output;
+      gpp_try(gp_file_set_name(&file, "image."));
+      gpp_try(gp_file_adjust_name_for_mime_type(&file));
+      auto name = val(GPP_CALL(const char *, gp_file_get_name(&file, _)));
 
-      gpp_unique_ptr<CameraFile, gp_file_unref> file(GPP_CALL(
-          CameraFile *, gp_file_new_from_handler(_, &handler, &output)));
-
-      gpp_try(
-          gp_camera_capture_preview(camera.get(), file.get(), context.get()));
-
-      auto mime_type =
-          GPP_CALL(const char *, gp_file_get_mime_type(file.get(), _));
-
-      val blob_opts = val::object();
-      blob_opts.set("type", mime_type);
-
-      return Blob.new_(output.getChunks(), std::move(blob_opts));
+      auto params = blob_chunks_and_opts(file);
+      return File.new_(std::move(params.first), std::move(name), std::move(params.second));
     });
   }
 
  private:
   gpp_unique_ptr<Camera, gp_camera_unref> camera;
   gpp_unique_ptr<GPContext, gp_context_unref> context;
+  gpp_unique_ptr<CameraFile, gp_file_unref> file;
 
   static std::pair<val, val> walk_config(CameraWidget *widget) {
     val result = val::object();
@@ -246,6 +232,27 @@ class Context {
 
     return {name, result};
   }
+
+  CameraFile &get_file() {
+    if (file.get() == nullptr) {
+      file.reset(GPP_CALL(CameraFile *, gp_file_new(_)));
+    }
+    return *file;
+  }
+
+  std::pair<val, val> blob_chunks_and_opts(CameraFile &file) {
+    auto mime_type = GPP_CALL(const char *, gp_file_get_mime_type(&file, _));
+
+    const char *data;
+    unsigned long size;
+    gpp_try(gp_file_get_data_and_size(&file, &data, &size));
+
+    val blob_opts = val::object();
+    blob_opts.set("type", mime_type);
+
+    return {arrayOf(Uint8Array.new_(emscripten::typed_memory_view(size, data))),
+            std::move(blob_opts)};
+  }
 };
 
 EMSCRIPTEN_BINDINGS(gphoto2_js_api) {
@@ -253,5 +260,6 @@ EMSCRIPTEN_BINDINGS(gphoto2_js_api) {
       .constructor<>()
       .function("configToJS", &Context::configToJS)
       .function("setConfigValue", &Context::setConfigValue)
-      .function("capturePreviewAsBlob", &Context::capturePreviewAsBlob);
+      .function("capturePreviewAsBlob", &Context::capturePreviewAsBlob)
+      .function("captureImageAsFile", &Context::captureImageAsFile);
 }

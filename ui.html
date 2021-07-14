@@ -2,6 +2,7 @@
 <link
   rel="stylesheet"
   href="https://unpkg.com/purecss@2.0.6/build/pure-min.css"
+  crossorigin="anonymous"
 />
 <style>
   #config label {
@@ -110,7 +111,7 @@
           choices.map(choice =>
             h(
               'option',
-              { value: choice, disabled: attrs.readonly && value !== choice },
+              { key: choice, value: choice, disabled: attrs.readonly && value !== choice },
               choice
             )
           )
@@ -182,6 +183,15 @@
       });
     }
 
+    handleCapture = async () => {
+      let file = await scheduleOp(() => context.captureImageAsFile());
+      let a = document.createElement('a');
+      a.download = file.name;
+      a.href = URL.createObjectURL(file);
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
     render(props, state) {
       return typeof config === 'string'
         ? config
@@ -193,6 +203,7 @@
               onfocusout: this.resumeUpdates,
               onchange: this.handleChange
             },
+            h('input', { type: 'button', value: 'Capture image', onclick: this.handleCapture }),
             h(Config, state)
           );
     }
