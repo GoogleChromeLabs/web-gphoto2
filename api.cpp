@@ -106,6 +106,11 @@ class Context {
           gpp_try(gp_widget_set_value(widget.get(), &on));
           break;
         }
+        case GP_WIDGET_DATE: {
+          auto seconds = static_cast<int>(value.as<double>() / 1000);
+          gpp_try(gp_widget_set_value(widget.get(), &seconds));
+          break;
+        }
         default: {
           throw std::logic_error("unimplemented");
         }
@@ -147,7 +152,8 @@ class Context {
       auto name = val(GPP_CALL(const char *, gp_file_get_name(&file, _)));
 
       auto params = blob_chunks_and_opts(file);
-      return File.new_(std::move(params.first), std::move(name), std::move(params.second));
+      return File.new_(std::move(params.first), std::move(name),
+                       std::move(params.second));
     });
   }
 
@@ -222,6 +228,13 @@ class Context {
           children.set(kv.first, kv.second);
         }
         result.set("children", children);
+
+        break;
+      }
+      case GP_WIDGET_DATE: {
+        auto seconds = GPP_CALL(int, gp_widget_get_value(widget, _));
+        result.set("type", "datetime");
+        result.set("value", static_cast<double>(seconds) * 1000);
 
         break;
       }

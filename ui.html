@@ -13,7 +13,8 @@
     max-width: 50%;
   }
 
-  #canvas-holder, #config {
+  #canvas-holder,
+  #config {
     max-height: 100vh;
   }
 </style>
@@ -21,11 +22,7 @@
   <div class="pure-u-2-3" id="canvas-holder">
     <canvas id="canvas" style="display: flex; margin: auto"></canvas>
   </div>
-  <div
-    id="config"
-    class="pure-u-1-3"
-    style="overflow-y: auto"
-  ></div>
+  <div id="config" class="pure-u-1-3" style="overflow-y: auto"></div>
 </div>
 <script type="importmap">
   {
@@ -74,7 +71,17 @@
       );
     }
     let { value, readonly } = config;
-    let valueProp = type === 'toggle' ? 'checked' : 'value';
+    let valueProp;
+    switch (type) {
+      case 'toggle':
+        valueProp = 'checked';
+        break;
+      case 'datetime':
+        valueProp = 'valueAsNumber';
+        break;
+      default:
+        valueProp = 'value';
+    }
     // We don't want to override current input's value while user is editing it.
     if (document.activeElement?.id === id) {
       value = document.activeElement?.[valueProp];
@@ -111,11 +118,26 @@
           choices.map(choice =>
             h(
               'option',
-              { key: choice, value: choice, disabled: attrs.readonly && value !== choice },
+              {
+                key: choice,
+                value: choice,
+                disabled: attrs.readonly && value !== choice
+              },
               choice
             )
           )
         );
+        break;
+      }
+      case 'datetime': {
+        inputElem = h('input', {
+          type: 'datetime-local',
+          ...attrs
+        });
+        break;
+      }
+      default: {
+        inputElem = '(unimplemented)';
         break;
       }
     }
@@ -152,6 +174,7 @@
           value = e.target.checked;
           break;
         case 'number':
+        case 'datetime-local':
           value = e.target.valueAsNumber;
           break;
         default:
@@ -190,7 +213,7 @@
       a.href = URL.createObjectURL(file);
       a.click();
       URL.revokeObjectURL(a.href);
-    }
+    };
 
     render(props, state) {
       return typeof config === 'string'
@@ -203,7 +226,11 @@
               onfocusout: this.resumeUpdates,
               onchange: this.handleChange
             },
-            h('input', { type: 'button', value: 'Capture image', onclick: this.handleCapture }),
+            h('input', {
+              type: 'button',
+              value: 'Capture image',
+              onclick: this.handleCapture
+            }),
             h(Config, state)
           );
     }
