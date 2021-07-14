@@ -228,11 +228,11 @@ class CaptureButton extends Component {
       h('input', {
         type: 'button',
         class:
-          'pure-button' + (this.state.inProgress ? ' pure-button-active' : ''),
+          'pure-input-1-3 pure-button' +
+          (this.state.inProgress ? ' pure-button-active' : ''),
         onclick: this.handleCapture,
-        value: 'Capture image'
-      }),
-      this.state.inProgress ? ' ⌛' : ''
+        value: `${this.state.inProgress ? '⌛' : '📷'} Capture image`
+      })
     );
   }
 }
