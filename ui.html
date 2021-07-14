@@ -215,7 +215,7 @@
       URL.revokeObjectURL(a.href);
     };
 
-    render(props, state) {
+    render(props, { config }) {
       return typeof config === 'string'
         ? config
         : h(
