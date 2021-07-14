@@ -1,4 +1,4 @@
-import { h, render, Component, createRef } from 'preact';
+import { h, render, Component, createRef, Fragment } from 'preact';
 import initModule from './libapi.mjs';
 
 /** @typedef {InstanceType<import('./libapi.mjs').Module['Context']>} Context */
@@ -205,6 +205,39 @@ class EditableInput extends Component {
   }
 }
 
+/** @extends Component<null, { inProgress: boolean }> */
+class CaptureButton extends Component {
+  state = { inProgress: false };
+
+  handleCapture = async () => {
+    this.setState({ inProgress: true });
+    let file = await scheduleOp(context => context.captureImageAsFile());
+    let url = URL.createObjectURL(file);
+    Object.assign(document.createElement('a'), {
+      download: file.name,
+      href: url
+    }).click();
+    URL.revokeObjectURL(url);
+    this.setState({ inProgress: false });
+  };
+
+  render() {
+    return h(
+      Fragment,
+      null,
+      h('input', {
+        type: 'button',
+        class:
+          'pure-button' + (this.state.inProgress ? ' pure-button-active' : ''),
+        onclick: this.handleCapture,
+        value: 'Capture image'
+      }),
+      this.state.inProgress ? ' ⌛' : ''
+    );
+  }
+}
+
+/** @extends Component<null, { config: string | Config }> */
 class Settings extends Component {
   state = { config: 'Connecting...' };
 
@@ -230,27 +263,17 @@ class Settings extends Component {
     });
   }
 
-  handleCapture = async () => {
-    let file = await scheduleOp(context => context.captureImageAsFile());
-    let a = document.createElement('a');
-    a.download = file.name;
-    a.href = URL.createObjectURL(file);
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-
-  render(props, state) {
+  render(
+    /** @type {Settings['props']} */ props,
+    /** @type {Settings['state']} */ state
+  ) {
     return typeof state.config === 'string'
       ? state.config
       : h(
           'form',
           { class: 'pure-form pure-form-aligned' },
-          h('input', {
-            type: 'button',
-            value: 'Capture image',
-            onclick: this.handleCapture
-          }),
-          h(ConfigComponent, state)
+          h(CaptureButton, null),
+          h(ConfigComponent, { config: state.config })
         );
   }
 }
