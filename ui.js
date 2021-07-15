@@ -59,12 +59,16 @@ class ConfigComponent extends Component {
     return !(this.state.inProgress && nextState.inProgress);
   }
 
-  getValueProp() {
+  getValueProp(out = false) {
     switch (this.props.config.type) {
       case 'toggle':
         return 'checked';
       case 'datetime':
         return 'valueAsNumber';
+      case 'range':
+        // Apparently can't render with `valueAsNumber` as preact property,
+        // but can retrieve it back.
+        return out ? 'valueAsNumber' : 'value';
       default:
         return 'value';
     }
@@ -73,7 +77,7 @@ class ConfigComponent extends Component {
   handleChange = async e => {
     this.setState({ inProgress: true });
 
-    let value = e.target[this.getValueProp()];
+    let value = e.target[this.getValueProp(true)];
 
     try {
       /** @type {Promise<void>} */
