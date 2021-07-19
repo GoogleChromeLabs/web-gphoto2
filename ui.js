@@ -4,11 +4,14 @@ import initModule from './libapi.mjs';
 /** @typedef {InstanceType<import('./libapi.mjs').Module['Context']>} Context */
 /** @typedef {import('./libapi.mjs').Config} Config */
 
-if (new URLSearchParams(location.search).has('debug')) {
+let isDebug = new URLSearchParams(location.search).has('debug');
+
+if (isDebug) {
   // @ts-ignore
   await import('preact/debug');
 }
 
+/** This function should be called once user has selected the camera and other operations can begin. */
 let prepareContext;
 
 /** Schedules an exclusive async operation on the global context. */
@@ -246,21 +249,60 @@ class CaptureButton extends Component {
   }
 }
 
-/** @typedef {{ type: 'Initial' } | { type: 'Status', message: string } | { type: 'Config', config: Config }} AppState */
+/** @typedef {{ type: 'CameraPicker' } | { type: 'Status', message: string } | { type: 'Config', config: Config }} AppState */
+
+const DEVICE_CLASS = 6; // PTP
+const DEVICE_SUBCLASS = 1; // MTP
 
 /** @extends Component<null, AppState> */
 class App extends Component {
-  state = /** @type {AppState} */ ({ type: 'Initial' });
+  state = /** @type {AppState} */ ({
+    type: 'Status',
+    message: 'Looking for cameras...'
+  });
+
+  constructor(...args) {
+    super(...args);
+    // @ts-ignore
+    navigator.usb.getDevices().then(devices => {
+      for (let dev of devices) {
+        for (let conf of dev.configurations) {
+          for (let intf of conf.interfaces) {
+            for (let alt of intf.alternates) {
+              if (
+                alt.interfaceClass === DEVICE_CLASS &&
+                alt.interfaceSubclass === DEVICE_SUBCLASS
+              ) {
+                return this.connectToCamera();
+              }
+            }
+          }
+        }
+      }
+      this.setState({ type: 'CameraPicker' });
+    });
+    window.onerror = message => {
+      this.setState({
+        type: 'Status',
+        message: `⚠ ${message}`
+      });
+    };
+  }
 
   selectDevice = async () => {
+    // @ts-ignore
     await navigator.usb.requestDevice({
       filters: [
         {
-          classCode: 6, // PTP
-          subclassCode: 1 // MTP
+          classCode: DEVICE_CLASS,
+          subclassCode: DEVICE_SUBCLASS
         }
       ]
     });
+    this.connectToCamera();
+  };
+
+  connectToCamera() {
     prepareContext();
     this.setState({ type: 'Status', message: 'Connecting...' });
     (async () => {
@@ -269,25 +311,22 @@ class App extends Component {
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     })();
-  };
+  }
 
   async refreshConfig() {
-    try {
-      this.setState({
-        type: 'Config',
-        config: await scheduleOp(context => context.configToJS())
-      });
-    } catch (e) {
-      this.setState({
-        type: 'Status',
-        message: String(e)
-      });
+    let config = await scheduleOp(context => context.configToJS());
+    if (!isDebug) {
+      delete config.children.other;
     }
+    this.setState({
+      type: 'Config',
+      config
+    });
   }
 
   render(/** @type {App['props']} */ props, /** @type {App['state']} */ state) {
     switch (state.type) {
-      case 'Initial':
+      case 'CameraPicker':
         return h(
           'div',
           { class: 'center-parent' },
