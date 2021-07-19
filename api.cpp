@@ -70,8 +70,6 @@ class Context {
     });
   }
 
-  Context(int foo) : Context() {}
-
   val configToJS() {
     return gpp_rethrow([=]() {
       GPPWidget config(
