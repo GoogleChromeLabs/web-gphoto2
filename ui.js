@@ -9,16 +9,21 @@ if (new URLSearchParams(location.search).has('debug')) {
   await import('preact/debug');
 }
 
+let prepareContext;
+
 /** Schedules an exclusive async operation on the global context. */
 const scheduleOp = (() => {
-  let queue = initModule()
-    .then(Module => new Module.Context())
-    .then(ctx => {
-      addEventListener('beforeunload', e => {
-        ctx.delete();
-      });
-      return ctx;
+  let queue = (async () => {
+    await new Promise(resolve => {
+      prepareContext = resolve;
     });
+    let { Context } = await initModule();
+    let ctx = await new Context();
+    addEventListener('beforeunload', e => {
+      ctx.delete();
+    });
+    return ctx;
+  })();
 
   /**
    * @template T
@@ -231,9 +236,9 @@ class CaptureButton extends Component {
       null,
       h('input', {
         type: 'button',
+        id: 'capture',
         class:
-          'pure-input-1-3 pure-button' +
-          (this.state.inProgress ? ' pure-button-active' : ''),
+          'pure-button' + (this.state.inProgress ? ' pure-button-active' : ''),
         onclick: this.handleCapture,
         value: `${this.state.inProgress ? '⌛' : '📷'} Capture image`
       })
@@ -241,100 +246,150 @@ class CaptureButton extends Component {
   }
 }
 
-/** @extends Component<null, { config: string | Config }> */
-class Settings extends Component {
-  state = { config: '' };
+/** @typedef {{ type: 'Initial' } | { type: 'Status', message: string } | { type: 'Config', config: Config }} AppState */
 
-  constructor() {
-    super();
+/** @extends Component<null, AppState> */
+class App extends Component {
+  state = /** @type {AppState} */ ({ type: 'Initial' });
+
+  selectDevice = async () => {
+    await navigator.usb.requestDevice({
+      filters: [
+        {
+          classCode: 6, // PTP
+          subclassCode: 1 // MTP
+        }
+      ]
+    });
+    prepareContext();
+    this.setState({ type: 'Status', message: 'Connecting...' });
     (async () => {
       while (true) {
         await this.refreshConfig();
         await new Promise(resolve => setTimeout(resolve, 100));
       }
     })();
-  }
+  };
 
   async refreshConfig() {
-    let config;
     try {
-      config = await scheduleOp(context => context.configToJS());
+      this.setState({
+        type: 'Config',
+        config: await scheduleOp(context => context.configToJS())
+      });
     } catch (e) {
-      config = String(e);
+      this.setState({
+        type: 'Status',
+        message: String(e)
+      });
     }
-    this.setState({
-      config
-    });
   }
 
-  render(
-    /** @type {Settings['props']} */ props,
-    /** @type {Settings['state']} */ state
-  ) {
-    return typeof state.config === 'string'
-      ? state.config
-      : h(
-          'form',
-          { class: 'pure-form pure-form-aligned' },
-          h(CaptureButton, null),
-          h(Widget, { config: state.config })
+  render(/** @type {App['props']} */ props, /** @type {App['state']} */ state) {
+    switch (state.type) {
+      case 'Initial':
+        return h(
+          'div',
+          { class: 'center-parent' },
+          h('input', {
+            class: 'center',
+            type: 'button',
+            onclick: this.selectDevice,
+            value: '🔍 Select camera'
+          })
         );
+      case 'Status':
+        return h(
+          'div',
+          { class: 'center-parent' },
+          h('div', { class: 'center' }, state.message)
+        );
+      case 'Config':
+        return h(
+          'div',
+          { class: 'pure-g' },
+          h(
+            'div',
+            { class: 'pure-u-2-3 center-parent', id: 'canvas-holder' },
+            h(PreviewCanvas, {
+              id: 'preview-canvas',
+              class: 'center'
+            })
+          ),
+          h(
+            'div',
+            { id: 'config', class: 'pure-u-1-3' },
+            h(
+              'form',
+              { class: 'pure-form pure-form-aligned' },
+              h(CaptureButton, null),
+              h(Widget, { config: state.config })
+            )
+          )
+        );
+    }
   }
 }
 
-render(h(Settings, null), document.getElementById('config'));
+render(h(App, null), document.body);
 
-(async () => {
-  // I have no idea why, but if we connect too soon, it just hangs...
-  await new Promise(resolve => setTimeout(resolve, 500));
+class PreviewCanvas extends Component {
+  ref = createRef();
 
-  let canvas = /** @type {HTMLCanvasElement} */ (
-    document.getElementById('canvas')
-  );
+  render(props) {
+    return h('canvas', { ...props, ref: this.ref });
+  }
 
-  let canvasCtx = canvas.getContext('bitmaprenderer');
+  async componentDidMount() {
+    // I have no idea why, but if we connect too soon, it just hangs...
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-  let ratio = 0;
+    let canvas = /** @type {HTMLCanvasElement} */ (this.ref.current);
+    let canvasHolder = canvas.parentElement;
 
-  while (true) {
-    try {
-      let blob = await scheduleOp(context => context.capturePreviewAsBlob());
+    let canvasCtx = canvas.getContext('bitmaprenderer');
 
-      // If ratio is known; decode resized image right away - it's a bit faster.
-      // If it isn't known, retrieve entire image to calculate ratio from its dimensions.
-      let img = await createImageBitmap(
-        blob,
-        ratio
-          ? {
-              resizeWidth: canvas.width,
-              resizeHeight: canvas.height
+    let ratio = 0;
+
+    while (true) {
+      try {
+        let blob = await scheduleOp(context => context.capturePreviewAsBlob());
+
+        // If ratio is known; decode resized image right away - it's a bit faster.
+        // If it isn't known, retrieve entire image to calculate ratio from its dimensions.
+        let img = await createImageBitmap(
+          blob,
+          ratio
+            ? {
+                resizeWidth: canvas.width,
+                resizeHeight: canvas.height
+              }
+            : {}
+        );
+        if (!ratio) {
+          ratio = img.width / img.height;
+
+          function updateCanvasSize() {
+            let width = canvasHolder.offsetWidth - 10;
+            let height = canvasHolder.offsetHeight;
+
+            if (height * ratio > width) {
+              height = width / ratio;
+            } else {
+              width = height * ratio;
             }
-          : {}
-      );
-      if (!ratio) {
-        ratio = img.width / img.height;
-        let canvasHolder = document.getElementById('canvas-holder');
 
-        function updateCanvasSize() {
-          let width = canvasHolder.offsetWidth - 10;
-          let height = canvasHolder.offsetHeight;
-
-          if (height * ratio > width) {
-            height = width / ratio;
-          } else {
-            width = height * ratio;
+            Object.assign(canvas, { width, height });
           }
 
-          Object.assign(canvas, { width, height });
+          updateCanvasSize();
+          new ResizeObserver(updateCanvasSize).observe(canvasHolder);
         }
-
-        updateCanvasSize();
-        new ResizeObserver(updateCanvasSize).observe(canvasHolder);
+        canvasCtx.transferFromImageBitmap(img);
+      } catch (e) {
+        console.warn(e);
       }
-      canvasCtx.transferFromImageBitmap(img);
-    } catch (e) {
-      console.warn(e);
+      await new Promise(resolve => requestAnimationFrame(resolve));
     }
-    await new Promise(resolve => requestAnimationFrame(resolve));
   }
-})();
+}
