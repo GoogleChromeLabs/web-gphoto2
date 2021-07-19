@@ -49,12 +49,12 @@ const scheduleOp = (() => {
  *
  * @extends Component<{ config: Config }>
  */
-class ConfigComponent extends Component {
+class Widget extends Component {
   state = { inProgress: false };
 
   shouldComponentUpdate(
-    /** @type {ConfigComponent['props']} */ nextProps,
-    /** @type {ConfigComponent['state']} */ nextState
+    /** @type {Widget['props']} */ nextProps,
+    /** @type {Widget['state']} */ nextState
   ) {
     return !(this.state.inProgress && nextState.inProgress);
   }
@@ -97,8 +97,8 @@ class ConfigComponent extends Component {
   };
 
   render(
-    /** @type {ConfigComponent['props']} */ { config },
-    /** @type {ConfigComponent['state']} */ { inProgress }
+    /** @type {Widget['props']} */ { config },
+    /** @type {Widget['state']} */ { inProgress }
   ) {
     let { label, name } = config;
     let id = `config-${name}`;
@@ -108,7 +108,7 @@ class ConfigComponent extends Component {
         { id },
         h('legend', {}, label),
         Object.values(config.children).map(config =>
-          h(ConfigComponent, { key: config.name, config })
+          h(Widget, { key: config.name, config })
         )
       );
     }
@@ -243,7 +243,7 @@ class CaptureButton extends Component {
 
 /** @extends Component<null, { config: string | Config }> */
 class Settings extends Component {
-  state = { config: 'Connecting...' };
+  state = { config: '' };
 
   constructor() {
     super();
@@ -277,7 +277,7 @@ class Settings extends Component {
           'form',
           { class: 'pure-form pure-form-aligned' },
           h(CaptureButton, null),
-          h(ConfigComponent, { config: state.config })
+          h(Widget, { config: state.config })
         );
   }
 }
