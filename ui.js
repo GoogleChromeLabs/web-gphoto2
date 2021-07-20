@@ -251,8 +251,8 @@ class CaptureButton extends Component {
 
 /** @typedef {{ type: 'CameraPicker' } | { type: 'Status', message: string } | { type: 'Config', config: Config }} AppState */
 
-const DEVICE_CLASS = 6; // PTP
-const DEVICE_SUBCLASS = 1; // MTP
+const INTERFACE_CLASS = 6; // PTP
+const INTERFACE_SUBCLASS = 1; // MTP
 
 /** @extends Component<null, AppState> */
 class App extends Component {
@@ -270,8 +270,8 @@ class App extends Component {
           for (let intf of conf.interfaces) {
             for (let alt of intf.alternates) {
               if (
-                alt.interfaceClass === DEVICE_CLASS &&
-                alt.interfaceSubclass === DEVICE_SUBCLASS
+                alt.interfaceClass === INTERFACE_CLASS &&
+                alt.interfaceSubclass === INTERFACE_SUBCLASS
               ) {
                 return this.connectToCamera();
               }
@@ -294,8 +294,8 @@ class App extends Component {
     await navigator.usb.requestDevice({
       filters: [
         {
-          classCode: DEVICE_CLASS,
-          subclassCode: DEVICE_SUBCLASS
+          classCode: INTERFACE_CLASS,
+          subclassCode: INTERFACE_SUBCLASS
         }
       ]
     });
