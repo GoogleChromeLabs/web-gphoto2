@@ -380,15 +380,29 @@ class PreviewCanvas extends Component {
   }
 
   async componentDidMount() {
-    // I have no idea why, but if we connect too soon, it just hangs...
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
     let canvas = /** @type {HTMLCanvasElement} */ (this.ref.current);
     let canvasHolder = canvas.parentElement;
 
     let canvasCtx = canvas.getContext('bitmaprenderer');
 
     let ratio = 0;
+
+    function updateCanvasSize() {
+      let width = canvasHolder.offsetWidth - 10;
+      let height = canvasHolder.offsetHeight;
+
+      if (height * ratio > width) {
+        height = width / ratio;
+      } else {
+        width = height * ratio;
+      }
+
+      Object.assign(canvas, { width, height });
+    }
+    new ResizeObserver(updateCanvasSize).observe(canvasHolder);
+
+    // I have no idea why, but if we connect too soon, it just hangs...
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     while (true) {
       try {
@@ -407,22 +421,7 @@ class PreviewCanvas extends Component {
         );
         if (!ratio) {
           ratio = img.width / img.height;
-
-          function updateCanvasSize() {
-            let width = canvasHolder.offsetWidth - 10;
-            let height = canvasHolder.offsetHeight;
-
-            if (height * ratio > width) {
-              height = width / ratio;
-            } else {
-              width = height * ratio;
-            }
-
-            Object.assign(canvas, { width, height });
-          }
-
           updateCanvasSize();
-          new ResizeObserver(updateCanvasSize).observe(canvasHolder);
         }
         canvasCtx.transferFromImageBitmap(img);
       } catch (e) {
