@@ -12,15 +12,17 @@ if (isDebug) {
 }
 
 /** This function should be called once user has selected the camera and other operations can begin. */
-let prepareContext;
+let start;
+
+let started = new Promise(resolve => {
+  start = resolve;
+});
 
 /** Schedules an exclusive async operation on the global context. */
 const scheduleOp = (() => {
   let queue = (async () => {
-    await new Promise(resolve => {
-      prepareContext = resolve;
-    });
     let { Context } = await initModule();
+    await started;
     let ctx = await new Context();
     addEventListener('beforeunload', e => {
       ctx.delete();
@@ -281,12 +283,12 @@ class App extends Component {
       }
       this.setState({ type: 'CameraPicker' });
     });
-    window.onerror = message => {
+    addEventListener('error', ({ message }) => {
       this.setState({
         type: 'Status',
         message: `⚠ ${message}`
       });
-    };
+    });
   }
 
   selectDevice = async () => {
@@ -303,7 +305,7 @@ class App extends Component {
   };
 
   connectToCamera() {
-    prepareContext();
+    start();
     this.setState({ type: 'Status', message: 'Connecting...' });
     (async () => {
       while (true) {
