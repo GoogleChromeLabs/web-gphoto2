@@ -131,19 +131,31 @@ class Context {
 
   val captureImageAsFile() {
     return gpp_rethrow([=]() {
-      CameraFilePath camera_file_path;
-      strcpy(camera_file_path.folder, "/");
-      strcpy(camera_file_path.name, "web-gphoto2");
+      struct TempCameraFile {
+        Camera &camera;
+        GPContext &context;
+        CameraFilePath path;
+
+        ~TempCameraFile() {
+          gp_camera_file_delete(&camera, path.folder, path.name, &context);
+        }
+      };
+
+      TempCameraFile camera_file{
+          .camera = *camera,
+          .context = *context,
+      };
+
+      strcpy(camera_file.path.folder, "/");
+      strcpy(camera_file.path.name, "web-gphoto2");
 
       gpp_try(gp_camera_capture(camera.get(), GP_CAPTURE_IMAGE,
-                                &camera_file_path, context.get()));
+                                &camera_file.path, context.get()));
 
       auto &file = get_file();
-      gpp_try(gp_camera_file_get(camera.get(), camera_file_path.folder,
-                                 camera_file_path.name, GP_FILE_TYPE_NORMAL,
+      gpp_try(gp_camera_file_get(camera.get(), camera_file.path.folder,
+                                 camera_file.path.name, GP_FILE_TYPE_NORMAL,
                                  &file, context.get()));
-      gpp_try(gp_camera_file_delete(camera.get(), camera_file_path.folder,
-                                    camera_file_path.name, context.get()));
 
       gpp_try(gp_file_set_name(&file, "image."));
       gpp_try(gp_file_adjust_name_for_mime_type(&file));
