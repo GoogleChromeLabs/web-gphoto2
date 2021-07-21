@@ -119,6 +119,23 @@ class App extends Component {
     });
   }
 
+  /**
+   * Set the specified config value.
+   * @param {string} name
+   * @param {*} value
+   */
+  setValue = async (name, value) => {
+    /** @type {Promise<void>} */
+    let uiTimeout;
+    await scheduleOp(context => {
+      // This is terrible, yes... but some configs return too quickly before they're actually updated.
+      // We want to wait some time before updating the UI in that case, but not block subsequent ops.
+      uiTimeout = new Promise(resolve => setTimeout(resolve, 800));
+      return context.setConfigValue(name, value);
+    });
+    await uiTimeout;
+  };
+
   render(/** @type {App['props']} */ props, /** @type {App['state']} */ state) {
     switch (state.type) {
       case 'CameraPicker':
@@ -150,7 +167,7 @@ class App extends Component {
               'form',
               { class: 'pure-form pure-form-aligned' },
               h(CaptureButton, null),
-              h(Widget, { config: state.config })
+              h(Widget, { config: state.config, setValue: this.setValue })
             )
           )
         );

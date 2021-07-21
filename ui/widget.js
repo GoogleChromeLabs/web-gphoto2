@@ -1,11 +1,10 @@
 import { h, Component, createRef } from 'preact';
-import { scheduleOp } from './ops.js';
 
 /** @typedef {import('../libapi.mjs').Config} Config */
 
 /**
  *
- * @extends Component<{ config: Config }>
+ * @extends Component<{ config: Config, setValue: (name: string, value: any) => Promise<void> }>
  */
 export class Widget extends Component {
   state = { inProgress: false };
@@ -34,28 +33,18 @@ export class Widget extends Component {
 
   handleChange = async e => {
     this.setState({ inProgress: true });
-
-    let value = e.target[this.getValueProp(true)];
-
     try {
-      /** @type {Promise<void>} */
-      let uiTimeout;
-      await scheduleOp(context => {
-        // This is terrible, yes... but some configs return too quickly before they're actually updated.
-        // We want to wait some time before updating the UI in that case, but not block subsequent ops.
-        uiTimeout = new Promise(resolve => setTimeout(resolve, 800));
-        return context.setConfigValue(this.props.config.name, value);
-      });
-      await uiTimeout;
-    } catch (e) {
-      console.error(e);
+      await this.props.setValue(
+        this.props.config.name,
+        e.target[this.getValueProp(true)]
+      );
+    } finally {
+      this.setState({ inProgress: false });
     }
-
-    this.setState({ inProgress: false });
   };
 
   render(
-    /** @type {Widget['props']} */ { config },
+    /** @type {Widget['props']} */ { config, setValue },
     /** @type {Widget['state']} */ { inProgress }
   ) {
     let { label, name } = config;
@@ -66,7 +55,7 @@ export class Widget extends Component {
         { id },
         h('legend', {}, label),
         Object.values(config.children).map(config =>
-          h(Widget, { key: config.name, config })
+          h(Widget, { key: config.name, config, setValue })
         )
       );
     }
