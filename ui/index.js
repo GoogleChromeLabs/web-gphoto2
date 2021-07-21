@@ -1,48 +1,18 @@
-import { h, render, Component, Fragment } from 'preact';
-import { scheduleOp, start } from './ops.js';
+import { h, render, Component } from 'preact';
+import { CaptureButton } from './capture-button.js';
+import { connect } from './ops.js';
 import { Preview } from './preview.js';
 import { Widget } from './widget.js';
 
 /** @typedef {import('../libapi.mjs').Context} Context */
 /** @typedef {import('../libapi.mjs').Config} Config */
+/** @typedef {import('./ops').Connection} Connection */
 
 let isDebug = new URLSearchParams(location.search).has('debug');
 
 if (isDebug) {
   // @ts-ignore
   await import('preact/debug');
-}
-
-/** @extends Component<null, { inProgress: boolean }> */
-class CaptureButton extends Component {
-  state = { inProgress: false };
-
-  handleCapture = async () => {
-    this.setState({ inProgress: true });
-    let file = await scheduleOp(context => context.captureImageAsFile());
-    let url = URL.createObjectURL(file);
-    Object.assign(document.createElement('a'), {
-      download: file.name,
-      href: url
-    }).click();
-    URL.revokeObjectURL(url);
-    this.setState({ inProgress: false });
-  };
-
-  render() {
-    return h(
-      Fragment,
-      null,
-      h('input', {
-        type: 'button',
-        id: 'capture',
-        class:
-          'pure-button' + (this.state.inProgress ? ' pure-button-active' : ''),
-        onclick: this.handleCapture,
-        value: `${this.state.inProgress ? '⌛' : '📷'} Capture image`
-      })
-    );
-  }
 }
 
 /** @typedef {{ type: 'CameraPicker' } | { type: 'Status', message: string } | { type: 'Config', config: Config }} AppState */
@@ -52,37 +22,28 @@ const INTERFACE_SUBCLASS = 1; // MTP
 
 /** @extends Component<null, AppState> */
 class App extends Component {
-  state = /** @type {AppState} */ ({
-    type: 'Status',
-    message: 'Looking for cameras...'
-  });
+  /** @type {Connection} */
+  connection;
 
-  constructor(...args) {
-    super(...args);
-    // @ts-ignore
-    navigator.usb.getDevices().then(devices => {
-      for (let dev of devices) {
-        for (let conf of dev.configurations) {
-          for (let intf of conf.interfaces) {
-            for (let alt of intf.alternates) {
-              if (
-                alt.interfaceClass === INTERFACE_CLASS &&
-                alt.interfaceSubclass === INTERFACE_SUBCLASS
-              ) {
-                return this.connectToCamera();
-              }
-            }
-          }
-        }
-      }
-      this.setState({ type: 'CameraPicker' });
-    });
-    addEventListener('error', ({ message }) => {
+  componentDidMount() {
+    addEventListener('error', ({ message }) =>
       this.setState({
         type: 'Status',
         message: `⚠ ${message}`
-      });
-    });
+      })
+    );
+    addEventListener(
+      'beforeunload',
+      () => {
+        if (!this.connection) return;
+        this.connection.disconnect();
+        this.connection = undefined;
+      },
+      { once: true }
+    );
+    // Try to connect to camera at startup.
+    // If none is found among saved connections, it will fallback to a picker.
+    this.tryToConnectToCamera();
   }
 
   selectDevice = async () => {
@@ -95,29 +56,32 @@ class App extends Component {
         }
       ]
     });
-    this.connectToCamera();
+    await this.tryToConnectToCamera();
   };
 
-  connectToCamera() {
-    start();
+  async tryToConnectToCamera() {
     this.setState({ type: 'Status', message: 'Connecting...' });
-    (async () => {
-      while (true) {
-        await this.refreshConfig();
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    })();
-  }
-
-  async refreshConfig() {
-    let config = await scheduleOp(context => context.configToJS());
-    if (!isDebug) {
-      delete config.children.other;
+    try {
+      this.connection = await connect();
+    } catch (e) {
+      console.warn(e);
+      this.setState({ type: 'CameraPicker' });
+      return;
     }
-    this.setState({
-      type: 'Config',
-      config
-    });
+    // We should reach this only once.
+    while (this.connection) {
+      let config = await this.connection.schedule(context =>
+        context.configToJS()
+      );
+      if (!isDebug) {
+        delete config.children.other;
+      }
+      this.setState({
+        type: 'Config',
+        config
+      });
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
   }
 
   /**
@@ -128,7 +92,7 @@ class App extends Component {
   setValue = async (name, value) => {
     /** @type {Promise<void>} */
     let uiTimeout;
-    await scheduleOp(context => {
+    await this.connection.schedule(context => {
       // This is terrible, yes... but some configs return too quickly before they're actually updated.
       // We want to wait some time before updating the UI in that case, but not block subsequent ops.
       uiTimeout = new Promise(resolve => setTimeout(resolve, 800));
@@ -136,6 +100,12 @@ class App extends Component {
     });
     await uiTimeout;
   };
+
+  capturePreview = () =>
+    this.connection.schedule(context => context.capturePreviewAsBlob());
+
+  captureImage = () =>
+    this.connection.schedule(context => context.captureImageAsFile());
 
   render(/** @type {App['props']} */ props, /** @type {App['state']} */ state) {
     switch (state.type) {
@@ -164,8 +134,7 @@ class App extends Component {
             'div',
             { class: 'pure-u-2-3' },
             h(Preview, {
-              getPreview: () =>
-                scheduleOp(context => context.capturePreviewAsBlob())
+              getPreview: this.capturePreview
             })
           ),
           h(
@@ -174,7 +143,7 @@ class App extends Component {
             h(
               'form',
               { class: 'pure-form pure-form-aligned' },
-              h(CaptureButton, null),
+              h(CaptureButton, { getFile: this.captureImage }),
               h(Widget, { config: state.config, setValue: this.setValue })
             )
           )
