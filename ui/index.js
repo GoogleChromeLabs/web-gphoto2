@@ -1,5 +1,6 @@
-import { h, render, Component, createRef, Fragment } from 'preact';
+import { h, render, Component, Fragment } from 'preact';
 import { scheduleOp, start } from './ops.js';
+import { Preview } from './preview.js';
 import { Widget } from './widget.js';
 
 /** @typedef {import('../libapi.mjs').Context} Context */
@@ -159,7 +160,14 @@ class App extends Component {
         return h(
           'div',
           { class: 'pure-g' },
-          h('div', { class: 'pure-u-2-3' }, h(PreviewCanvas, null)),
+          h(
+            'div',
+            { class: 'pure-u-2-3' },
+            h(Preview, {
+              getPreview: () =>
+                scheduleOp(context => context.capturePreviewAsBlob())
+            })
+          ),
           h(
             'div',
             { id: 'config', class: 'pure-u-1-3' },
@@ -176,76 +184,3 @@ class App extends Component {
 }
 
 render(h(App, null), document.body);
-
-class PreviewCanvas extends Component {
-  canvasHolderRef = createRef();
-  canvasRef = createRef();
-
-  render(props) {
-    return h(
-      'div',
-      { class: 'center-parent', ref: this.canvasHolderRef },
-      h('canvas', { class: 'center', ref: this.canvasRef })
-    );
-  }
-
-  async componentDidMount() {
-    let canvas = /** @type {HTMLCanvasElement} */ (this.canvasRef.current);
-    let canvasHolder = this.canvasHolderRef.current;
-
-    let canvasCtx = canvas.getContext('bitmaprenderer');
-
-    let ratio = 0;
-
-    let throttled = 0;
-    function updateCanvasSize() {
-      if (throttled) {
-        cancelAnimationFrame(throttled);
-      }
-      throttled = requestAnimationFrame(() => {
-        throttled = 0;
-
-        let width = canvasHolder.offsetWidth - 10;
-        let height = canvasHolder.offsetHeight;
-
-        if (height * ratio > width) {
-          height = width / ratio;
-        } else {
-          width = height * ratio;
-        }
-
-        Object.assign(canvas, { width, height });
-      });
-    }
-    new ResizeObserver(updateCanvasSize).observe(canvasHolder);
-
-    // I have no idea why, but if we connect too soon, it just hangs...
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    while (true) {
-      try {
-        let blob = await scheduleOp(context => context.capturePreviewAsBlob());
-
-        // If ratio is known; decode resized image right away - it's a bit faster.
-        // If it isn't known, retrieve entire image to calculate ratio from its dimensions.
-        let img = await createImageBitmap(
-          blob,
-          ratio
-            ? {
-                resizeWidth: canvas.width,
-                resizeHeight: canvas.height
-              }
-            : {}
-        );
-        if (!ratio) {
-          ratio = img.width / img.height;
-          updateCanvasSize();
-        }
-        canvasCtx.transferFromImageBitmap(img);
-      } catch (e) {
-        console.warn(e);
-      }
-      await new Promise(resolve => requestAnimationFrame(resolve));
-    }
-  }
-}
