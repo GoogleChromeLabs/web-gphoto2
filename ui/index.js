@@ -8,10 +8,9 @@ import { Widget } from './widget.js';
 /** @typedef {import('../libapi.mjs').Config} Config */
 /** @typedef {import('./ops').Connection} Connection */
 
-let isDebug = new URLSearchParams(location.search).has('debug');
+export const isDebug = new URLSearchParams(location.search).has('debug');
 
 if (isDebug) {
-  // @ts-ignore
   await import('preact/debug');
 }
 
