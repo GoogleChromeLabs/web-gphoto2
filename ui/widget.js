@@ -3,6 +3,17 @@ import { h, Component, createRef } from 'preact';
 /** @typedef {import('../libapi.mjs').Config} Config */
 
 /**
+ * @param {Config} config
+ */
+function getValueForComparison(config) {
+  if (config.type === 'window' || config.type === 'section') {
+    // compare instances themselves
+    return config;
+  }
+  return config.value;
+}
+
+/**
  *
  * @extends Component<{ config: Config, setValue: (name: string, value: any) => Promise<void> }>
  */
@@ -13,7 +24,14 @@ export class Widget extends Component {
     /** @type {Widget['props']} */ nextProps,
     /** @type {Widget['state']} */ nextState
   ) {
-    return !(this.state.inProgress && nextState.inProgress);
+    if (this.state.inProgress && nextState.inProgress) {
+      return false;
+    }
+    return (
+      getValueForComparison(this.props.config) !==
+        getValueForComparison(nextProps.config) ||
+      this.props.config.readonly !== nextProps.config.readonly
+    );
   }
 
   getValueProp(out = false) {
