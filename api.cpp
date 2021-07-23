@@ -8,16 +8,6 @@
 
 using emscripten::val;
 
-template <typename T, int (*Deleter)(T *)>
-void gpp_deleter(T *ptr) {
-  gpp_try(Deleter(ptr));
-}
-
-template <typename T, void (*Deleter)(T *)>
-void gpp_deleter(T *ptr) {
-  Deleter(ptr);
-}
-
 template <typename T, auto Deleter>
 using gpp_unique_ptr =
     std::unique_ptr<T, std::integral_constant<decltype(Deleter), Deleter>>;
