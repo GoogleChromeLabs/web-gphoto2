@@ -1,4 +1,5 @@
 /.vscode/c_cpp_properties.json
 /.libs
 /libapi.*
+!/libapi.mjs.d.ts
 /node_modules
