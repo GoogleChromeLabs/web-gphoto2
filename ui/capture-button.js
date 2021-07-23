@@ -1,19 +1,24 @@
 import { h, Component, Fragment } from 'preact';
 
-/** @extends Component<{ getFile: () => Promise<File> }, { inProgress: boolean }> */
+/** @extends Component<{ getFile: () => Promise<File> }, { status: string }> */
 export class CaptureButton extends Component {
-  state = { inProgress: false };
+  state = { status: '📷' };
 
   handleCapture = async () => {
-    this.setState({ inProgress: true });
-    let file = await this.props.getFile();
-    let url = URL.createObjectURL(file);
-    Object.assign(document.createElement('a'), {
-      download: file.name,
-      href: url
-    }).click();
-    URL.revokeObjectURL(url);
-    this.setState({ inProgress: false });
+    this.setState({ status: '⌛' });
+    try {
+      let file = await this.props.getFile();
+      let url = URL.createObjectURL(file);
+      Object.assign(document.createElement('a'), {
+        download: file.name,
+        href: url
+      }).click();
+      URL.revokeObjectURL(url);
+      this.setState({ status: '📷' });
+    } catch (err) {
+      console.error(err);
+      this.setState({ status: '❌' });
+    }
   };
 
   render() {
@@ -23,10 +28,10 @@ export class CaptureButton extends Component {
       h('input', {
         type: 'button',
         id: 'capture',
-        class:
-          'pure-button' + (this.state.inProgress ? ' pure-button-active' : ''),
+        disabled: this.state.status !== '📷',
+        class: 'pure-button',
         onclick: this.handleCapture,
-        value: `${this.state.inProgress ? '⌛' : '📷'} Capture image`
+        value: `${this.state.status} Capture image`
       })
     );
   }
