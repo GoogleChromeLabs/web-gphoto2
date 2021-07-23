@@ -60,6 +60,16 @@ class Context {
     });
   }
 
+  bool hasPendingEvent() {
+    return gpp_rethrow([=]() {
+      CameraEventType event_type = GP_EVENT_UNKNOWN;
+      gpp_unique_ptr<void, free> event_data(GPP_CALL(
+          void *, gp_camera_wait_for_event(camera.get(), 0, &event_type, _,
+                                           context.get())));
+      return event_type != GP_EVENT_TIMEOUT;
+    });
+  }
+
   val configToJS() {
     return gpp_rethrow([=]() {
       GPPWidget config(
@@ -277,5 +287,6 @@ EMSCRIPTEN_BINDINGS(gphoto2_js_api) {
       .function("configToJS", &Context::configToJS)
       .function("setConfigValue", &Context::setConfigValue)
       .function("capturePreviewAsBlob", &Context::capturePreviewAsBlob)
-      .function("captureImageAsFile", &Context::captureImageAsFile);
+      .function("captureImageAsFile", &Context::captureImageAsFile)
+      .function("hasPendingEvent", &Context::hasPendingEvent);
 }

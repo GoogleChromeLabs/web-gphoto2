@@ -79,7 +79,12 @@ class App extends Component {
         type: 'Config',
         config
       });
-      await new Promise(resolve => setTimeout(resolve, 100));
+      do {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } while (
+        !(await this.connection.schedule(context => context.hasPendingEvent()))
+      );
+      console.log('Event!');
     }
   }
 
