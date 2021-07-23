@@ -80,7 +80,9 @@ class App extends Component {
         config
       });
       while (true) {
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve =>
+          requestIdleCallback(resolve, { timeout: 500 })
+        );
         let hasPendingEvent = await this.connection.schedule(context =>
           context.hasPendingEvent()
         );
