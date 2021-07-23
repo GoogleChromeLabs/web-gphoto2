@@ -20,8 +20,8 @@ void gpp_try(int status) {
   }
 }
 
-void gpp_error(GPContext *context, const char *text, void *data) {
-  throw std::runtime_error(text);
+void gpp_log_error(GPContext *context, const char *text, void *data) {
+  std::cerr << text << std::endl;
 }
 
 #define GPP_CALL(RET, EXPR) \
@@ -55,7 +55,7 @@ class Context {
     gpp_rethrow([=]() {
       camera.reset(GPP_CALL(Camera *, gp_camera_new(_)));
       context.reset(gp_context_new());
-      gp_context_set_error_func(context.get(), gpp_error, nullptr);
+      gp_context_set_error_func(context.get(), gpp_log_error, nullptr);
       gpp_try(gp_camera_init(camera.get(), context.get()));
     });
   }
