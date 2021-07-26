@@ -68,11 +68,13 @@ export class Widget extends Component {
     let { label, name } = config;
     let id = `config-${name}`;
     if (config.type === 'window' || config.type === 'section') {
+      let children = Object.values(config.children);
+      if (!children.length) return;
       return h(
         'fieldset',
         { id },
         h('legend', {}, label),
-        Object.values(config.children).map(config =>
+        children.map(config =>
           h(Widget, { key: config.name, config, setValue })
         )
       );

@@ -143,7 +143,9 @@ class App extends Component {
             'div',
             { class: 'pure-u-2-3' },
             h(Preview, {
-              getPreview: this.capturePreview
+              getPreview: this.connection.supportedOps.capturePreview
+                ? this.capturePreview
+                : undefined
             })
           ),
           h(
@@ -152,7 +154,9 @@ class App extends Component {
             h(
               'form',
               { class: 'pure-form pure-form-aligned' },
-              h(CaptureButton, { getFile: this.captureImage }),
+              this.connection.supportedOps.triggerCapture
+                ? h(CaptureButton, { getFile: this.captureImage })
+                : undefined,
               h(Widget, { config: state.config, setValue: this.setValue })
             )
           )

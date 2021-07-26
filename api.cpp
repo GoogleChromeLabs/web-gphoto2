@@ -185,12 +185,6 @@ class Context {
     });
   }
 
-  void triggerCapture() {
-    gpp_rethrow([=]() {
-      gpp_try(gp_camera_trigger_capture(camera.get(), context.get()));
-    });
-  }
-
  private:
   gpp_unique_ptr<Camera, gp_camera_unref> camera;
   gpp_unique_ptr<GPContext, gp_context_unref> context;

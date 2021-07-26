@@ -8,7 +8,7 @@ const Stats = isDebug
     )
   : null;
 
-/** @extends Component<{ getPreview: () => Promise<Blob> }, { error?: string }> */
+/** @extends Component<{ getPreview?: () => Promise<Blob> }, { error?: string }> */
 export class Preview extends Component {
   canvasHolderRef = createRef();
   canvasRef = createRef();
@@ -20,17 +20,15 @@ export class Preview extends Component {
     return h(
       'div',
       { class: 'center-parent', ref: this.canvasHolderRef },
-      this.state.error
-        ? h(
-            'div',
-            { class: 'center' },
-            `Could not retrieve preview: ${this.state.error}`
-          )
+      !this.props.getPreview
+        ? h('div', { class: 'center' }, `Preview is unsupported`)
         : h('canvas', { class: 'center', ref: this.canvasRef })
     );
   }
 
   async componentDidMount() {
+    if (!this.props.getPreview) return;
+
     let canvas = /** @type {HTMLCanvasElement} */ (this.canvasRef.current);
     let canvasHolder = this.canvasHolderRef.current;
 
@@ -70,39 +68,34 @@ export class Preview extends Component {
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     while (this.canvasRef.current) {
-      let blob;
       try {
-        blob = await this.props.getPreview();
-      } catch (error) {
-        this.setState({ error: error.message });
-        return;
-      }
+        let blob = await this.props.getPreview();
 
-      // If ratio is known; decode resized image right away - it's a bit faster.
-      // If it isn't known, retrieve entire image to calculate ratio from its dimensions.
-      let img = await createImageBitmap(
-        blob,
-        ratio
-          ? {
-              resizeWidth: canvas.width,
-              resizeHeight: canvas.height
-            }
-          : {}
-      );
-      if (!ratio) {
-        ratio = img.width / img.height;
-        updateCanvasSize();
+        // If ratio is known; decode resized image right away - it's a bit faster.
+        // If it isn't known, retrieve entire image to calculate ratio from its dimensions.
+        let img = await createImageBitmap(
+          blob,
+          ratio
+            ? {
+                resizeWidth: canvas.width,
+                resizeHeight: canvas.height
+              }
+            : {}
+        );
+        if (!ratio) {
+          ratio = img.width / img.height;
+          updateCanvasSize();
+        }
+        canvasCtx.transferFromImageBitmap(img);
+      } catch (error) {
+        console.error(error);
       }
-      canvasCtx.transferFromImageBitmap(img);
       await new Promise(resolve => requestAnimationFrame(resolve));
       this.stats?.update();
     }
   }
 
   componentWillUnmount() {
-    this.resizeObserver.disconnect();
-    if (isDebug) {
-      this.canvasHolderRef.current.removeChild(this.stats.dom);
-    }
+    this.resizeObserver?.disconnect();
   }
 }

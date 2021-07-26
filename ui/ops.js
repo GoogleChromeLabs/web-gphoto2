@@ -2,12 +2,13 @@ import initModule from '../libapi.mjs';
 
 /** @typedef {import('../libapi.mjs').Context} Context */
 
-const ContextPromise = initModule().then(Module => Module.Context);
+const ModulePromise = initModule();
 
 export async function connect() {
-  let Context = await ContextPromise;
+  const Module = await ModulePromise;
 
-  let context = await new Context();
+  let context = await new Module.Context();
+  let supportedOps = await context.supportedOps();
 
   let queue = Promise.resolve();
 
@@ -30,6 +31,7 @@ export async function connect() {
   }
 
   return {
+    supportedOps,
     schedule,
     disconnect() {
       context.delete();

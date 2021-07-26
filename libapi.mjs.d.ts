@@ -13,6 +13,15 @@ export type Config = {
   | { type: 'datetime'; value: number }
 );
 
+declare interface SupportedOps {
+  captureImage: boolean;
+  captureVideo: boolean;
+  captureAudio: boolean;
+  capturePreview: boolean;
+  config: boolean;
+  triggerCapture: boolean;
+}
+
 declare class Context {
   configToJS(): Promise<Config & { type: 'window' }>;
   setConfigValue(
@@ -22,6 +31,7 @@ declare class Context {
   capturePreviewAsBlob(): Promise<Blob>;
   captureImageAsFile(): Promise<File>;
   hasPendingEvent(): Promise<boolean>;
+  supportedOps(): SupportedOps;
 
   delete(): void;
   isDeleted(): boolean;
