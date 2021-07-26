@@ -317,15 +317,6 @@ class Context {
 };
 
 EMSCRIPTEN_BINDINGS(gphoto2_js_api) {
-  emscripten::enum_<CameraOperation>("SupportedOps")
-      .value("None", GP_OPERATION_NONE)
-      .value("CaptureImage", GP_OPERATION_CAPTURE_IMAGE)
-      .value("CaptureVideo", GP_OPERATION_CAPTURE_VIDEO)
-      .value("CaptureAudio", GP_OPERATION_CAPTURE_AUDIO)
-      .value("CapturePreview", GP_OPERATION_CAPTURE_PREVIEW)
-      .value("Config", GP_OPERATION_CONFIG)
-      .value("TriggerCapture", GP_OPERATION_TRIGGER_CAPTURE);
-
   emscripten::class_<Context>("Context")
       .constructor<>()
       .function("configToJS", &Context::configToJS)
