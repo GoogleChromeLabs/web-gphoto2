@@ -28,6 +28,8 @@ export class Widget extends Component {
       return false;
     }
     return (
+      this.state.inProgress ||
+      nextState.inProgress ||
       getValueForComparison(this.props.config) !==
         getValueForComparison(nextProps.config) ||
       this.props.config.readonly !== nextProps.config.readonly
