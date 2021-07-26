@@ -313,6 +313,5 @@ EMSCRIPTEN_BINDINGS(gphoto2_js_api) {
       .function("capturePreviewAsBlob", &Context::capturePreviewAsBlob)
       .function("captureImageAsFile", &Context::captureImageAsFile)
       .function("hasPendingEvent", &Context::hasPendingEvent)
-      .function("triggerCapture", &Context::triggerCapture)
       .function("supportedOps", &Context::supportedOps);
 }
