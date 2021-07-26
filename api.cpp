@@ -86,6 +86,9 @@ class Context {
         if (event_type == GP_EVENT_TIMEOUT) {
           break;
         }
+        if (event_type == GP_EVENT_UNKNOWN) {
+          EM_ASM({ console.log(UTF8ToString($0)); }, event_data.get());
+        }
         had_events = true;
       }
       return had_events;
@@ -240,7 +243,17 @@ class Context {
       }
       case GP_WIDGET_TOGGLE: {
         result.set("type", "toggle");
-        result.set("value", GPP_CALL(int, gp_widget_get_value(widget, _)) != 0);
+        int value = GPP_CALL(int, gp_widget_get_value(widget, _));
+        // Note: explicitly not adding `value` for any other values
+        // (e.g. camera actions often would return 2 here...)
+        switch (value) {
+          case 0:
+            result.set("value", false);
+            break;
+          case 1:
+            result.set("value", true);
+            break;
+        }
 
         break;
       }

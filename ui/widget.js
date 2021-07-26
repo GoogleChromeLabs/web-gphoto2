@@ -27,12 +27,17 @@ export class Widget extends Component {
     if (this.state.inProgress && nextState.inProgress) {
       return false;
     }
+    if (this.state.inProgress || nextState.inProgress) {
+      return true;
+    }
+    let prevConfig = this.props.config;
+    let { config } = nextProps;
+    if (config.type === 'toggle' && config.value === undefined) {
+      return false;
+    }
     return (
-      this.state.inProgress ||
-      nextState.inProgress ||
-      getValueForComparison(this.props.config) !==
-        getValueForComparison(nextProps.config) ||
-      this.props.config.readonly !== nextProps.config.readonly
+      getValueForComparison(config) !== getValueForComparison(prevConfig) ||
+      config.readonly !== prevConfig.readonly
     );
   }
 
