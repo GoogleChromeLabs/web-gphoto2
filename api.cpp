@@ -60,6 +60,21 @@ class Context {
     });
   }
 
+  val supportedOps() {
+    auto ops =
+        GPP_CALL(CameraAbilities, gp_camera_get_abilities(camera.get(), _))
+            .operations;
+
+    val result = val::object();
+    result.set("captureImage", (ops & GP_OPERATION_CAPTURE_IMAGE) != 0);
+    result.set("captureVideo", (ops & GP_OPERATION_CAPTURE_VIDEO) != 0);
+    result.set("captureAudio", (ops & GP_OPERATION_CAPTURE_AUDIO) != 0);
+    result.set("capturePreview", (ops & GP_OPERATION_CAPTURE_PREVIEW) != 0);
+    result.set("config", (ops & GP_OPERATION_CONFIG) != 0);
+    result.set("triggerCapture", (ops & GP_OPERATION_TRIGGER_CAPTURE) != 0);
+    return result;
+  }
+
   bool hasPendingEvent() {
     return gpp_rethrow([=]() {
       CameraEventType event_type = GP_EVENT_UNKNOWN;
@@ -167,6 +182,12 @@ class Context {
       auto params = blob_chunks_and_opts(file);
       return File.new_(std::move(params.first), std::move(name),
                        std::move(params.second));
+    });
+  }
+
+  void triggerCapture() {
+    gpp_rethrow([=]() {
+      gpp_try(gp_camera_trigger_capture(camera.get(), context.get()));
     });
   }
 
@@ -282,11 +303,22 @@ class Context {
 };
 
 EMSCRIPTEN_BINDINGS(gphoto2_js_api) {
+  emscripten::enum_<CameraOperation>("SupportedOps")
+      .value("None", GP_OPERATION_NONE)
+      .value("CaptureImage", GP_OPERATION_CAPTURE_IMAGE)
+      .value("CaptureVideo", GP_OPERATION_CAPTURE_VIDEO)
+      .value("CaptureAudio", GP_OPERATION_CAPTURE_AUDIO)
+      .value("CapturePreview", GP_OPERATION_CAPTURE_PREVIEW)
+      .value("Config", GP_OPERATION_CONFIG)
+      .value("TriggerCapture", GP_OPERATION_TRIGGER_CAPTURE);
+
   emscripten::class_<Context>("Context")
       .constructor<>()
       .function("configToJS", &Context::configToJS)
       .function("setConfigValue", &Context::setConfigValue)
       .function("capturePreviewAsBlob", &Context::capturePreviewAsBlob)
       .function("captureImageAsFile", &Context::captureImageAsFile)
-      .function("hasPendingEvent", &Context::hasPendingEvent);
+      .function("hasPendingEvent", &Context::hasPendingEvent)
+      .function("triggerCapture", &Context::triggerCapture)
+      .function("supportedOps", &Context::supportedOps);
 }
