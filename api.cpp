@@ -75,13 +75,20 @@ class Context {
     return result;
   }
 
-  bool hasPendingEvent() {
+  bool consumeEvents() {
     return gpp_rethrow([=]() {
-      CameraEventType event_type = GP_EVENT_UNKNOWN;
-      gpp_unique_ptr<void, free> event_data(GPP_CALL(
-          void *, gp_camera_wait_for_event(camera.get(), 0, &event_type, _,
-                                           context.get())));
-      return event_type != GP_EVENT_TIMEOUT;
+      bool had_events = false;
+      for (;;) {
+        CameraEventType event_type = GP_EVENT_UNKNOWN;
+        gpp_unique_ptr<void, free> event_data(GPP_CALL(
+            void *, gp_camera_wait_for_event(camera.get(), 0, &event_type, _,
+                                             context.get())));
+        if (event_type == GP_EVENT_TIMEOUT) {
+          break;
+        }
+        had_events = true;
+      }
+      return had_events;
     });
   }
 
@@ -312,6 +319,6 @@ EMSCRIPTEN_BINDINGS(gphoto2_js_api) {
       .function("setConfigValue", &Context::setConfigValue)
       .function("capturePreviewAsBlob", &Context::capturePreviewAsBlob)
       .function("captureImageAsFile", &Context::captureImageAsFile)
-      .function("hasPendingEvent", &Context::hasPendingEvent)
+      .function("consumeEvents", &Context::consumeEvents)
       .function("supportedOps", &Context::supportedOps);
 }

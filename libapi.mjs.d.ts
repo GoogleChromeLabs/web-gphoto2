@@ -30,7 +30,7 @@ declare class Context {
   ): Promise<undefined>;
   capturePreviewAsBlob(): Promise<Blob>;
   captureImageAsFile(): Promise<File>;
-  hasPendingEvent(): Promise<boolean>;
+  consumeEvents(): Promise<boolean>;
   supportedOps(): SupportedOps;
 
   delete(): void;

@@ -73,6 +73,7 @@ class App extends Component {
         context.configToJS()
       );
       if (!isDebug) {
+        delete config.children.actions;
         delete config.children.other;
       }
       this.setState({
@@ -83,10 +84,10 @@ class App extends Component {
         await new Promise(resolve =>
           requestIdleCallback(resolve, { timeout: 500 })
         );
-        let hasPendingEvent = await this.connection.schedule(context =>
-          context.hasPendingEvent()
+        let hadEvents = await this.connection.schedule(context =>
+          context.consumeEvents()
         );
-        if (hasPendingEvent) {
+        if (hadEvents) {
           break;
         }
       }
