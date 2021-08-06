@@ -1,10 +1,7 @@
-SYSROOT = $(PWD)/deps/.install
+SYSROOT = $(EM_CACHE)/sysroot
 
-# Add custom sysroot to paths.
-export CPPFLAGS += -I$(SYSROOT)/include
-export LDFLAGS += -L$(SYSROOT)/lib
-export PATH := $(SYSROOT)/bin:$(PATH)
-export PKG_CONFIG_PATH = $(SYSROOT)/lib/pkgconfig
+# Add custom sysroot to autoconf macro search
+# (we need this because we use custom local copy of libtool)
 export ACLOCAL_PATH := $(SYSROOT)/share/aclocal:$(ACLOCAL_PATH)
 
 # Common linking flags for all targets.
