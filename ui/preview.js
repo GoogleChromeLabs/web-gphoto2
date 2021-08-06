@@ -1,4 +1,5 @@
 import { h, Component, createRef } from 'preact';
+import { rethrowIfCritical } from './ops.js';
 
 export const isDebug = new URLSearchParams(location.search).has('debug');
 
@@ -87,8 +88,9 @@ export class Preview extends Component {
           updateCanvasSize();
         }
         canvasCtx.transferFromImageBitmap(img);
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        rethrowIfCritical(err);
+        console.error('Could not refresh preview:', err);
       }
       await new Promise(resolve => requestAnimationFrame(resolve));
       this.stats?.update();

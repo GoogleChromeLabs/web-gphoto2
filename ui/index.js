@@ -1,6 +1,6 @@
 import { h, render, Component } from 'preact';
 import { CaptureButton } from './capture-button.js';
-import { connect } from './ops.js';
+import { connect, rethrowIfCritical } from './ops.js';
 import { Preview } from './preview.js';
 import { Widget } from './widget.js';
 
@@ -69,26 +69,36 @@ class App extends Component {
     }
     // We should reach this only once.
     while (this.connection) {
-      let config = await this.connection.schedule(context =>
-        context.configToJS()
-      );
-      if (!isDebug) {
-        delete config.children.actions;
-        delete config.children.other;
+      try {
+        let config = await this.connection.schedule(context =>
+          context.configToJS()
+        );
+        if (!isDebug) {
+          delete config.children.actions;
+          delete config.children.other;
+        }
+        this.setState({
+          type: 'Config',
+          config
+        });
+      } catch (err) {
+        rethrowIfCritical(err);
+        console.error('Could not refresh config:', err);
       }
-      this.setState({
-        type: 'Config',
-        config
-      });
       while (true) {
         await new Promise(resolve =>
           requestIdleCallback(resolve, { timeout: 500 })
         );
-        let hadEvents = await this.connection.schedule(context =>
-          context.consumeEvents()
-        );
-        if (hadEvents) {
-          break;
+        try {
+          let hadEvents = await this.connection.schedule(context =>
+            context.consumeEvents()
+          );
+          if (hadEvents) {
+            break;
+          }
+        } catch (err) {
+          rethrowIfCritical(err);
+          console.error('Could not consume events:', err);
         }
       }
     }
