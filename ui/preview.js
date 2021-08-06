@@ -87,12 +87,12 @@ export class Preview extends Component {
           ratio = img.width / img.height;
           updateCanvasSize();
         }
+        await new Promise(resolve => requestAnimationFrame(resolve));
         canvasCtx.transferFromImageBitmap(img);
       } catch (err) {
         rethrowIfCritical(err);
         console.error('Could not refresh preview:', err);
       }
-      await new Promise(resolve => requestAnimationFrame(resolve));
       this.stats?.update();
     }
   }
