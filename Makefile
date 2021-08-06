@@ -30,41 +30,37 @@ api.o: CXXFLAGS += -std=c++17 -fexceptions
 $(SYSROOT):
 	mkdir -p $(@D)
 
+deps/%/configure.ac:
+	git submodule update --init $(@D)
+
+deps/%/configure: deps/%/configure.ac | $(SYSROOT)/lib/libltdl.la
+	cd $(@D) && autoreconf -fiv
+
+deps/%/Makefile: deps/%/configure
+	cd $(@D) && ./configure --prefix=$(SYSROOT) --disable-shared $(CONFIGURE_ARGS)
+
 ## libtool
 
 deps/libtool/configure:
 	mkdir -p deps/libtool
 	curl -L https://ftpmirror.gnu.org/libtool/libtool-2.4.6.tar.gz | tar zx --strip 1 -C deps/libtool
 
-deps/libtool/Makefile: deps/libtool/configure
-	cd $(@D) && ./configure --prefix=$(SYSROOT) --disable-shared
-
 $(SYSROOT)/lib/libltdl.la: deps/libtool/Makefile | $(SYSROOT)
 	$(MAKE) -C deps/libtool install
 
-## libgphoto2
-
-deps/libgphoto2/configure.ac deps/libusb/configure.ac &:
-	git submodule update --init
-
-deps/libgphoto2/configure: deps/libusb/configure.ac | $(SYSROOT)/lib/libltdl.la
-	cd $(@D) && autoreconf -fiv
-
-deps/libgphoto2/Makefile: deps/libgphoto2/configure | $(SYSROOT)/lib/libusb-1.0.la
-	./configure --prefix=$(SYSROOT) --disable-shared --host=wasm32 \
-		 --without-libxml-2.0 --disable-nls --disable-ptpip --disable-disk \
-		 --with-camlibs=ptp2
-
-$(SYSROOT)/lib/libgphoto2.la: deps/libgphoto2/Makefile $(SYSROOT)/lib/libusb-1.0.la $(SYSROOT)/lib/libltdl.la
-	$(MAKE) -C deps/libgphoto2 install
-
 ## libusb
 
-deps/libusb/configure: deps/libusb/configure.ac | $(SYSROOT)/lib/libltdl.la
-	cd $(@D) && autoreconf -fiv
-
-deps/libusb/Makefile: deps/libusb/configure
-	cd $(@D) && ./configure --prefix=$(SYSROOT) --disable-shared --host=wasm32
+deps/libusb/Makefile: CONFIGURE_ARGS = --host=wasm32
 
 $(SYSROOT)/lib/libusb-1.0.la: deps/libusb/Makefile
 	$(MAKE) -C deps/libusb install
+
+## libgphoto2
+
+deps/libgphoto2/Makefile: | $(SYSROOT)/lib/libusb-1.0.la
+deps/libgphoto2/Makefile: CONFIGURE_ARGS = --host=wasm32 \
+	--without-libxml-2.0 --disable-nls --disable-ptpip --disable-disk \
+	--with-camlibs=ptp2
+
+$(SYSROOT)/lib/libgphoto2.la: deps/libgphoto2/Makefile $(SYSROOT)/lib/libusb-1.0.la $(SYSROOT)/lib/libltdl.la
+	$(MAKE) -C deps/libgphoto2 install
