@@ -35,6 +35,12 @@ void gpp_log_error(GPContext *context, const char *text, void *data) {
 EM_JS([[noreturn]] void, throw_msg, (const char *msg),
       { throw new Error(UTF8ToString(msg)); });
 
+// This is workaround for Emscripten throwing C++ exceptions as meaningless
+// numbers (pointers) instead of actual messages.
+// To rethrow actual message, we manually wrap all Embind exports into
+// callbacks, those callbacks are passed to this function,
+// it ensures that all destructors are executed correctly, catches C++ exception
+// if any, extracts the message and rethrows it as a JS one. Easy-peasy...
 template <typename Func>
 auto gpp_rethrow(Func func) {
   try {
@@ -61,18 +67,20 @@ class Context {
   }
 
   val supportedOps() {
-    auto ops =
-        GPP_CALL(CameraAbilities, gp_camera_get_abilities(camera.get(), _))
-            .operations;
+    return gpp_rethrow([=]() {
+      auto ops =
+          GPP_CALL(CameraAbilities, gp_camera_get_abilities(camera.get(), _))
+              .operations;
 
-    val result = val::object();
-    result.set("captureImage", (ops & GP_OPERATION_CAPTURE_IMAGE) != 0);
-    result.set("captureVideo", (ops & GP_OPERATION_CAPTURE_VIDEO) != 0);
-    result.set("captureAudio", (ops & GP_OPERATION_CAPTURE_AUDIO) != 0);
-    result.set("capturePreview", (ops & GP_OPERATION_CAPTURE_PREVIEW) != 0);
-    result.set("config", (ops & GP_OPERATION_CONFIG) != 0);
-    result.set("triggerCapture", (ops & GP_OPERATION_TRIGGER_CAPTURE) != 0);
-    return result;
+      val result = val::object();
+      result.set("captureImage", (ops & GP_OPERATION_CAPTURE_IMAGE) != 0);
+      result.set("captureVideo", (ops & GP_OPERATION_CAPTURE_VIDEO) != 0);
+      result.set("captureAudio", (ops & GP_OPERATION_CAPTURE_AUDIO) != 0);
+      result.set("capturePreview", (ops & GP_OPERATION_CAPTURE_PREVIEW) != 0);
+      result.set("config", (ops & GP_OPERATION_CONFIG) != 0);
+      result.set("triggerCapture", (ops & GP_OPERATION_TRIGGER_CAPTURE) != 0);
+      return result;
+    });
   }
 
   bool consumeEvents() {
