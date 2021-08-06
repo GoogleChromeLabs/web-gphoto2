@@ -1,0 +1,8 @@
+[submodule "libgphoto2"]
+	path = deps/libgphoto2
+	url = https://github.com/RReverser/libgphoto2
+	branch = em
+[submodule "libusb"]
+	path = deps/libusb
+	url = https://github.com/RReverser/libusb
+	branch = em
