@@ -23,7 +23,7 @@ libapi.mjs: api.o $(SYSROOT)/lib/libltdl.la $(SYSROOT)/lib/libgphoto2.la
 
 api.o: deps/libgphoto2/configure.ac
 api.o: CPPFLAGS += -Ideps/libgphoto2 -Ideps/libgphoto2/libgphoto2_port
-api.o: CXXFLAGS += -std=c++17 -fexceptions
+api.o: CXXFLAGS += -std=c++17 -fexceptions -pthread
 
 ## Generic rules for deps
 
