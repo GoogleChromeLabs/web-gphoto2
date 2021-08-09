@@ -1,7 +1,7 @@
 SYSROOT = $(EM_CACHE)/sysroot
 
-# Add custom sysroot to autoconf macro search
-# (we need this because we use custom local copy of libtool)
+# Add custom sysroot to library & macro search paths.
+export LDFLAGS += -L$(SYSROOT)/lib
 export ACLOCAL_PATH := $(SYSROOT)/share/aclocal:$(ACLOCAL_PATH)
 
 # Common linking flags for all targets.
