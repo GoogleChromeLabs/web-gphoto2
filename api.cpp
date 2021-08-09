@@ -95,7 +95,7 @@ class Context {
           break;
         }
         if (event_type == GP_EVENT_UNKNOWN) {
-          EM_ASM({ console.log(UTF8ToString($0)); }, event_data.get());
+          // EM_ASM({ console.log(UTF8ToString($0)); }, event_data.get());
         }
         had_events = true;
       }
