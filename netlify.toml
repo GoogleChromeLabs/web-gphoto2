@@ -1,0 +1,10 @@
+[build]
+publish = "ui"
+command = "./build.sh"
+
+[[headers]]
+for = "/*"
+
+[headers.values]
+Cross-Origin-Embedder-Policy = "require-corp"
+Cross-Origin-Opener-Policy = "same-origin"

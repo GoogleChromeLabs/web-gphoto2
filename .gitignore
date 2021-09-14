@@ -1,8 +1,11 @@
 /.vscode/c_cpp_properties.json
-/libapi.*
-!/libapi.mjs.d.ts
+/ui/libapi.*
+!/ui/libapi.mjs.d.ts
 /node_modules
 /deps/*
 !/deps/libgphoto2
 !/deps/libusb
 /api.o
+
+# Local Netlify folder
+.netlify
