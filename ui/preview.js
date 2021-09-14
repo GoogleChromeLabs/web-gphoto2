@@ -66,7 +66,7 @@ export class Preview extends Component {
     );
 
     // I have no idea why, but if we connect too soon, it just hangs...
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
 
     while (this.canvasRef.current) {
       try {
