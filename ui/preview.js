@@ -65,9 +65,6 @@ export class Preview extends Component {
       canvasHolder
     );
 
-    // I have no idea why, but if we connect too soon, it just hangs...
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
     while (this.canvasRef.current) {
       try {
         let blob = await this.props.getPreview();
