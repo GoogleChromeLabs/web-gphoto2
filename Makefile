@@ -5,7 +5,7 @@ export LDFLAGS += -L$(SYSROOT)/lib
 export ACLOCAL_PATH := $(SYSROOT)/share/aclocal:$(ACLOCAL_PATH)
 
 # Common linking flags for all targets.
-export LDFLAGS += -s DYNAMIC_EXECUTION=0 -s AUTO_JS_LIBRARIES=0 -s AUTO_NATIVE_LIBRARIES=0 -s ALLOW_UNIMPLEMENTED_SYSCALLS=0
+export LDFLAGS += -s DYNAMIC_EXECUTION=0 -s AUTO_JS_LIBRARIES=0 -s AUTO_NATIVE_LIBRARIES=0
 
 # Common compilation & linking flags for all langs and targets.
 COMMON_FLAGS = -Os -flto
