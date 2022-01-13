@@ -18,9 +18,9 @@
 
 if [ -z "$CI" ]
 then
-	DOCKER_INTERACTIVE_OPTS=""
-else
 	DOCKER_INTERACTIVE_OPTS="-it"
+else
+	DOCKER_INTERACTIVE_OPTS=""
 fi
 
 docker build -t web-gphoto2 - < Dockerfile
