@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/purecss@2.0.6/build/pure-min.css"
+      crossorigin="anonymous"
+    />
+    <style>
+      .center-parent {
+        display: flex;
+        height: 100vh;
+      }
+
+      .center {
+        margin: auto;
+      }
+
+      #capture {
+        width: 20ch;
+      }
+
+      #config {
+        overflow-y: auto;
+        max-height: 100vh;
+      }
+
+      #config label {
+        max-width: 40%;
+      }
+
+      #config select {
+        max-width: 50%;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "preact": "https://unpkg.com/preact/dist/preact.module.js",
+          "preact/debug": "https://unpkg.com/preact/debug/dist/debug.module.js",
+          "preact/devtools": "https://unpkg.com/preact@10.5.14/devtools/dist/devtools.module.js",
+          "stats.js": "https://unpkg.com/stats.js@0.17.0/src/Stats.js"
+        }
+      }
+    </script>
+    <script type="module" src="index.js"></script>
+  </head>
+</html>
