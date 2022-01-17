@@ -126,7 +126,7 @@ export class Widget extends Component {
         break;
       }
       case 'text':
-        inputElem = readonly ? value : h(EditableInput, attrs);
+        inputElem = h(EditableInput, attrs);
         break;
       case 'toggle': {
         inputElem = h('input', {
@@ -142,11 +142,14 @@ export class Widget extends Component {
           'select',
           attrs,
           choices.map(choice =>
-            h(Option, {
-              key: choice,
-              value: choice,
-              disabled: attrs.readonly && value !== choice
-            })
+            h(
+              'option',
+              {
+                key: choice,
+                disabled: attrs.readonly && value !== choice
+              },
+              choice
+            )
           )
         );
         break;
@@ -173,27 +176,13 @@ export class Widget extends Component {
 }
 
 /**
- * Special memoized option to work around https://github.com/preactjs/preact/issues/3171.
- * @extends Component<{ value: string, disabled?: boolean }>
- */
-class Option extends Component {
-  shouldComponentUpdate(/** @type {Option['props']} */ nextProps) {
-    return nextProps.value !== this.props.value;
-  }
-
-  render() {
-    return h('option', this.props, this.props.value);
-  }
-}
-
-/**
  * Wrapper around <input /> that doesn't update it while it's in focus to allow editing.
  */
 class EditableInput extends Component {
   ref = createRef();
 
   shouldComponentUpdate() {
-    return document.activeElement !== this.ref.current;
+    return this.props.readonly || document.activeElement !== this.ref.current;
   }
 
   render(props) {
