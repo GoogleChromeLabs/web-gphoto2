@@ -142,11 +142,14 @@ export class Widget extends Component {
           'select',
           attrs,
           choices.map(choice =>
-            h(Option, {
-              key: choice,
-              value: choice,
-              disabled: attrs.readonly && value !== choice
-            })
+            h(
+              'option',
+              {
+                key: choice,
+                disabled: attrs.readonly && value !== choice
+              },
+              choice
+            )
           )
         );
         break;
@@ -169,20 +172,6 @@ export class Widget extends Component {
       h('label', { for: id }, (inProgress ? '⌛ ' : '') + label),
       inputElem
     );
-  }
-}
-
-/**
- * Special memoized option to work around https://github.com/preactjs/preact/issues/3171.
- * @extends Component<{ value: string, disabled?: boolean }>
- */
-class Option extends Component {
-  shouldComponentUpdate(/** @type {Option['props']} */ nextProps) {
-    return nextProps.value !== this.props.value;
-  }
-
-  render() {
-    return h('option', this.props, this.props.value);
   }
 }
 
