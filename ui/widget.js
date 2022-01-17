@@ -126,7 +126,7 @@ export class Widget extends Component {
         break;
       }
       case 'text':
-        inputElem = readonly ? value : h(EditableInput, attrs);
+        inputElem = h(EditableInput, attrs);
         break;
       case 'toggle': {
         inputElem = h('input', {
@@ -182,7 +182,7 @@ class EditableInput extends Component {
   ref = createRef();
 
   shouldComponentUpdate() {
-    return document.activeElement !== this.ref.current;
+    return this.props.readonly || document.activeElement !== this.ref.current;
   }
 
   render(props) {
