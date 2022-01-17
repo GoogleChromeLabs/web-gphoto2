@@ -151,12 +151,28 @@ class App extends Component {
         return h(
           'div',
           { class: 'center-parent' },
-          h('input', {
-            class: 'center',
-            type: 'button',
-            onclick: this.selectDevice,
-            value: '🔍 Select camera'
-          })
+          h(
+            'div',
+            {
+              class: 'center'
+            },
+            h('input', {
+              type: 'button',
+              onclick: this.selectDevice,
+              value: '🔍 Select camera'
+            }),
+            h(
+              'p',
+              null,
+              "Don't know how you got here? Check out the ",
+              h(
+                'a',
+                { href: 'https://web.dev/porting-libusb-to-webusb/' },
+                'blog post'
+              ),
+              '!'
+            )
+          )
         );
       case 'Status':
         return h(
