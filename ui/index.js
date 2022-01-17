@@ -202,6 +202,7 @@ class App extends Component {
               this.connection.supportedOps.triggerCapture
                 ? h(CaptureButton, { getFile: this.captureImage })
                 : undefined,
+              ' ',
               h(
                 'a',
                 {
