@@ -199,18 +199,22 @@ class App extends Component {
             h(
               'form',
               { class: 'pure-form pure-form-aligned' },
-              this.connection.supportedOps.triggerCapture
-                ? h(CaptureButton, { getFile: this.captureImage })
-                : undefined,
-              ' ',
               h(
-                'a',
-                {
-                  class: 'pure-button',
-                  href: 'https://github.com/GoogleChromeLabs/web-gphoto2',
-                  target: '_blank'
-                },
-                '⭐ Star on Github'
+                'fieldset',
+                null,
+                this.connection.supportedOps.triggerCapture
+                  ? h(CaptureButton, { getFile: this.captureImage })
+                  : undefined,
+                ' ',
+                h(
+                  'a',
+                  {
+                    class: 'pure-button',
+                    href: 'https://github.com/GoogleChromeLabs/web-gphoto2',
+                    target: '_blank'
+                  },
+                  '⭐ Star on Github'
+                )
               ),
               h(Widget, { config: state.config, setValue: this.setValue })
             )
