@@ -186,6 +186,15 @@ class App extends Component {
               this.connection.supportedOps.triggerCapture
                 ? h(CaptureButton, { getFile: this.captureImage })
                 : undefined,
+              h(
+                'a',
+                {
+                  class: 'pure-button',
+                  href: 'https://github.com/GoogleChromeLabs/web-gphoto2',
+                  target: '_blank'
+                },
+                '⭐ Star on Github'
+              ),
               h(Widget, { config: state.config, setValue: this.setValue })
             )
           )
