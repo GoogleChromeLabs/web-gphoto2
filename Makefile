@@ -17,13 +17,13 @@ export LDFLAGS += $(COMMON_FLAGS)
 
 ui/libapi.mjs: api.o $(SYSROOT)/lib/libltdl.la $(SYSROOT)/lib/libgphoto2.la
 	libtool --verbose --mode=link $(LD) $(LDFLAGS) -o $@ $+ \
-		-fexceptions --bind -s ASYNCIFY -s ALLOW_MEMORY_GROWTH \
+		-fwasm-exceptions --bind -s ASYNCIFY -s ALLOW_MEMORY_GROWTH \
 		-dlpreopen $(SYSROOT)/lib/libgphoto2/2.5.28.1/ptp2.la \
 		-dlpreopen $(SYSROOT)/lib/libgphoto2_port/0.12.0/usb1.la
 
 api.o: deps/libgphoto2/configure.ac
 api.o: CPPFLAGS += -Ideps/libgphoto2 -Ideps/libgphoto2/libgphoto2_port
-api.o: CXXFLAGS += -std=c++17 -fexceptions -pthread
+api.o: CXXFLAGS += -std=c++17 -fwasm-exceptions -pthread
 
 ## Generic rules for deps
 
