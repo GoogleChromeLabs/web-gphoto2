@@ -222,7 +222,17 @@ class App extends Component {
                   '⭐ Star on Github'
                 )
               ),
-              h(Widget, { config: state.config, setValue: this.setValue })
+              h(Widget, { config: state.config, setValue: this.setValue }),
+              h(
+                'fieldset',
+                null,
+                h('legend', null, 'Camera Summary'),
+                h(
+                  'pre',
+                  { style: 'white-space: pre-wrap' },
+                  this.connection.summary.text
+                )
+              )
             )
           )
         );
