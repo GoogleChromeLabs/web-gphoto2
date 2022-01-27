@@ -170,6 +170,12 @@ class App extends Component {
                 { href: 'https://web.dev/porting-libusb-to-webusb/' },
                 'blog post'
               ),
+              ' or the ',
+              h(
+                'a',
+                { href: 'https://github.com/GoogleChromeLabs/web-gphoto2' },
+                'repo'
+              ),
               '!'
             )
           )
