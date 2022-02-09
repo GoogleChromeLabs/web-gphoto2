@@ -50,6 +50,16 @@
         }
       }
     </script>
-    <script type="module" src="index.js"></script>
+    <script type="module">
+      try {
+        if (!('usb' in navigator)) {
+          throw new Error('WebUSB is unsupported');
+        }
+        await import('./index.js');
+      } catch (e) {
+        console.error(e);
+        await import('./index-fallback.js');
+      }
+    </script>
   </head>
 </html>
