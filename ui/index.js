@@ -60,6 +60,7 @@ class App extends Component {
     );
     // Try to connect to camera at startup.
     // If none is found among saved connections, it will fallback to a picker.
+    this.setState({ type: 'Status', message: '⌛ Loading...' });
     this.tryToConnectToCamera();
   }
 
@@ -73,11 +74,11 @@ class App extends Component {
         }
       ]
     });
+    this.setState({ type: 'Status', message: '⌛ Connecting...' });
     await this.tryToConnectToCamera();
   };
 
   async tryToConnectToCamera() {
-    this.setState({ type: 'Status', message: 'Connecting...' });
     try {
       this.connection = await connect();
     } catch (e) {
