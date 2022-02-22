@@ -40,7 +40,7 @@ export async function connect() {
   let queue = Promise.resolve();
 
   /** Schedules an exclusive async operation on the global context.
-   * @template T,T2
+   * @template T
    * @param {(ctx: Context) => Promise<T>} op
    * @returns {Promise<T>}
    */
