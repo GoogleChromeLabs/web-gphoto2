@@ -31,6 +31,10 @@ export type Config = {
   | { type: 'datetime'; value: number }
 );
 
+declare interface Summary {
+  text: string;
+}
+
 declare interface SupportedOps {
   captureImage: boolean;
   captureVideo: boolean;
@@ -49,6 +53,7 @@ declare class Context {
   capturePreviewAsBlob(): Promise<Blob>;
   captureImageAsFile(): Promise<File>;
   consumeEvents(): Promise<boolean>;
+  summary(): Summary;
   supportedOps(): SupportedOps;
 
   delete(): void;

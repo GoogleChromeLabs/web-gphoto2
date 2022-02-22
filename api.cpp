@@ -84,6 +84,16 @@ class Context {
     });
   }
 
+  val summary() {
+    return gpp_rethrow([=]() {
+      val result = val::object();
+      auto summary = GPP_CALL(
+          CameraText, gp_camera_get_summary(camera.get(), _, context.get()));
+      result.set("text", static_cast<const char *>(summary.text));
+      return result;
+    });
+  }
+
   val supportedOps() {
     return gpp_rethrow([=]() {
       auto ops =
@@ -350,5 +360,6 @@ EMSCRIPTEN_BINDINGS(gphoto2_js_api) {
       .function("capturePreviewAsBlob", &Context::capturePreviewAsBlob)
       .function("captureImageAsFile", &Context::captureImageAsFile)
       .function("consumeEvents", &Context::consumeEvents)
+      .function("summary", &Context::summary)
       .function("supportedOps", &Context::supportedOps);
 }

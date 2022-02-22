@@ -34,6 +34,7 @@ export async function connect() {
   const Module = await ModulePromise;
 
   let context = await new Module.Context();
+  let summary = await context.summary();
   let supportedOps = await context.supportedOps();
 
   /** @type {Promise<unknown>} */
@@ -51,6 +52,7 @@ export async function connect() {
   }
 
   return {
+    summary,
     supportedOps,
     schedule,
     disconnect() {
