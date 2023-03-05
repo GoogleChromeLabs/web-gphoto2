@@ -21,6 +21,10 @@ npx serve ui # starts a local server with COOP/COEP
 
 Then, navigate to http://localhost:5000/ in Chrome.
 
+## See also
+
+[RReverser/eos-remote-web](https://github.com/RReverser/eos-remote-web) - my other project for controlling Canon cameras over Web Bluetooth.
+
 ## License
 
 Like the dependencies, this demo is licensed under [LGPL v2.1](https://github.com/GoogleChromeLabs/web-gphoto2/blob/main/LICENSE).
