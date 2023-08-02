@@ -1,4 +1,30 @@
 {
+  "name": "web-gphoto2-npm-test",
+  "version": "0.2.0",
+  "description": "WASM implementation of gphoto2 and libusb to control DSLR cameras over USB on the Web",
+  "main": "ui/libapi.mjs",
+  "types": "ui/libapi.mjs.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/web-gphoto2"
+  },
+  "keywords": [
+    "gphoto2",
+    "libusb",
+    "wasm"
+  ],
+  "author": "Ingvar Stepanyan - RReverser - me@rreverser.com",
+  "license": "LGPLv2.1",
+  "bugs": {
+    "url": "https://github.com/GoogleChromeLabs/web-gphoto2/issues"
+  },
+  "homepage": "https://github.com/GoogleChromeLabs/web-gphoto2#readme",
+  "files": [
+    "ui/libapi.*"
+  ],
   "devDependencies": {
     "@types/emscripten": "^1.39.5",
     "@types/requestidlecallback": "^0.3.4",
