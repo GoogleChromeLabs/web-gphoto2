@@ -1,6 +1,6 @@
 {
-  "name": "web-gphoto2-npm-test",
-  "version": "0.2.0",
+  "name": "web-gphoto2",
+  "version": "0.1.0",
   "description": "WASM implementation of gphoto2 and libusb to control DSLR cameras over USB on the Web",
   "main": "ui/libapi.mjs",
   "types": "ui/libapi.mjs.d.ts",
