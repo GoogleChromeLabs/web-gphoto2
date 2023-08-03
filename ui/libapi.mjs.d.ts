@@ -22,14 +22,14 @@ export type Config = {
   label: string;
   readonly: boolean;
 } & (
-  | { type: 'range'; value: number; min: number; max: number; step: number }
-  | { type: 'menu' | 'radio'; value: string; choices: string[] }
-  | { type: 'toggle'; value: boolean }
-  | { type: 'text'; value: string }
-  | { type: 'window'; children: Record<string, Config> }
-  | { type: 'section'; children: Record<string, Config> }
-  | { type: 'datetime'; value: number }
-);
+    | { type: 'range'; value: number; min: number; max: number; step: number }
+    | { type: 'menu' | 'radio'; value: string; choices: string[] }
+    | { type: 'toggle'; value: boolean }
+    | { type: 'text'; value: string }
+    | { type: 'window'; children: Record<string, Config> }
+    | { type: 'section'; children: Record<string, Config> }
+    | { type: 'datetime'; value: number }
+  );
 
 declare interface SupportedOps {
   captureImage: boolean;
@@ -41,6 +41,9 @@ declare interface SupportedOps {
 }
 
 declare class Context {
+  context(): Promise<any> {
+    throw new Error('Method not implemented.');
+  }
   configToJS(): Promise<Config & { type: 'window' }>;
   setConfigValue(
     name: string,
@@ -53,6 +56,26 @@ declare class Context {
 
   delete(): void;
   isDeleted(): boolean;
+}
+
+export declare class Camera {
+  constructor();
+
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+
+  getConfig(): Promise<any>; // replace "any" with the actual type of the config if you have it
+
+  getSupportedOps(): SupportedOps;
+
+  setConfigValue(name: string, value: number | string | boolean): Promise<void>;
+
+  capturePreviewAsBlob(): Promise<Blob>;
+  captureImageAsFile(): Promise<File>;
+  consumeEvents(): Promise<boolean>;
+
+  private rethrowIfCritical(err: any): void;  // any error type can be replaced by more specific if available
+  private schedule<T>(op: (ctx: any) => Promise<T>): Promise<T>;  // ctx and T types can be replaced by more specific if available
 }
 
 export interface Module extends EmscriptenModule {
