@@ -12,69 +12,45 @@ yarn add web-gphoto2
 ```
 
 ## Usage
-**Note: This package ONLY runs in the browser context**. It will not work in NodeJS. If you are using a build-tool make sure to dynamically import this package so it is only imported in the browser context.
 
+A short example on how to use this package:
 ```ts
-let initModule: any;
+import Camera from 'web-gphoto2';
 
-if (typeof window !== 'undefined') {
-    import('web-gphoto2').then((module) => {
-        initModule = module.default;
-    }).catch((error) => {
-        console.error("Error loading web-gphoto2", error);
+let camera = new Camera();
+
+async function connectCamera() {
+    // @ts-ignore
+    await navigator.usb.requestDevice({
+        filters: [{ classCode: 6, subclassCode: 1 }]
     });
-} else {
-    console.warn("web-gphoto2 is only available in the browser");
+    await camera.connect();
+}
+
+async function getSupportedOps() {
+    const ops = await camera.getSupportedOps();
+    console.log('Supported Ops:', ops);
+}
+
+async function getCameraConfig() {
+    const config = await camera.getConfig();
+    console.log('Config:', config);
+}
+
+async function updateConfig() {
+    await camera.setConfigValue('iso', '800');
+}
+
+async function capturePreviewAsBlob() {
+    const blob = await camera.capturePreviewAsBlob();
+    console.log('Blob:', blob);
+}
+
+async function captureImageAsFile() {
+    const file = await camera.captureImageAsFile();
+    console.log('File:', file);
 }
 ```
-
-A short example on how to use this package to obtain the camera config:
-```ts
-// After importing the initModule from web-gphoto2
-const ModulePromise = initModule();
-
-export function rethrowIfCritical(err) {
-    if (err.constructor !== Error) throw err;
-}
-
-export async function connect() {
-    const Module = await ModulePromise;
-
-    let context = await new Module.Context();
-    let supportedOps = await context.supportedOps();
-
-    let queue = Promise.resolve();
-
-    function schedule(op) {
-        let res = queue.then(() => op(context));
-        queue = res.catch(rethrowIfCritical);
-        return res;
-    }
-
-    return {
-        supportedOps,
-        schedule,
-        disconnect() {
-            context.delete();
-        }
-    };
-}
-
-// Select the camera, connect, and obtain the config. Error handling is omitted for brevity but should be included, check the example for details.
-await navigator.usb.requestDevice({
-    filters: [
-        {
-            classCode: 6, // PTP
-            subclassCode: 1 // MTP
-        }
-    ]
-});
-let connection = await connect();
-let config = await connection.schedule((context: any) => context.configToJS());
-console.log('Obtained config: ', config);
-```
-
-More information can be found in the example included in the Github repository.
 
 ## Common Issues
 ### SharedArrayBuffer can not be found 
