@@ -1,7 +1,7 @@
 {
   "name": "web-gphoto2",
   "version": "0.1.0",
-  "description": "WASM implementation of gphoto2 and libusb to control DSLR cameras over USB on the Web",
+  "description": "WebAssembly implementation of gphoto2 and libusb to control DSLR cameras over USB on the Web",
   "main": "ui/libapi.mjs",
   "types": "ui/libapi.mjs.d.ts",
   "scripts": {
@@ -14,7 +14,7 @@
   "keywords": [
     "gphoto2",
     "libusb",
-    "wasm"
+    "webassembly"
   ],
   "author": "Ingvar Stepanyan - RReverser - me@rreverser.com",
   "license": "LGPLv2.1",

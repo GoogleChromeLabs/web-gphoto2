@@ -1,5 +1,5 @@
 # Web-gPhoto2
-A gPhoto2 implementation using WASM to control DSLR cameras from the browser.
+A gPhoto2 implementation using WebAssembly to control DSLR cameras from the browser.
 
 Powered by a [custom fork](https://github.com/RReverser/libgphoto2) of [libgphoto2](https://github.com/gphoto/libgphoto2), the [WebUSB](https://github.com/WICG/webusb) backend of [libusb](https://github.com/libusb/libusb), and WebAssembly via [Emscripten](https://emscripten.org/).
 
@@ -78,7 +78,7 @@ More information can be found in the example included in the Github repository.
 
 ## Common Issues
 ### SharedArrayBuffer can not be found 
-SharedArrayBuffer has been disabled across all browsers due to the Spectre vulnerability. This package uses SharedArrayBuffer to communicate with the WASM module. To work around this issue, you need to set two response headers for your document:
+SharedArrayBuffer has been disabled across all browsers due to the Spectre vulnerability. This package uses SharedArrayBuffer to communicate with the WebAssembly module. To work around this issue, you need to set two response headers for your document:
 ```
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
@@ -87,7 +87,7 @@ Cross-Origin-Embedder-Policy: require-corp
 Information from [Stackoverflow](https://stackoverflow.com/questions/64650119/react-error-sharedarraybuffer-is-not-defined-in-firefox)
 
 ### Error: Not found: /node_modules/.vite/deps/libapi.wasm
-Vite tries to optimize the dependencies by default. This causes the WASM module to be moved to a different location. To prevent this, you need to exclude the web-gphoto2 package from the optimization.
+Vite tries to optimize the dependencies by default. This causes the WebAssembly module to be moved to a different location. To prevent this, you need to exclude the web-gphoto2 package from the optimization.
 
 In vite, both of the above mentioned issues are solved by adding the following to your vite.config.js:
 ```ts
