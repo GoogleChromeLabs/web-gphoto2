@@ -33,13 +33,13 @@ async function initializeModule() {
     }
 }
 
-const ModulePromise = initializeModule().then(initModule => {
-    if (initModule) {
-        return initModule();
-    } else {
-        return null;
+export function rethrowIfCritical(err) {
+    // If it's precisely Error, it's a custom error; anything else - SyntaxError,
+    // WebAssembly.RuntimeError, TypeError, etc. - is treated as critical here.
+    if (err.constructor !== Error) {
+        throw err;
     }
-});
+}
 
 class Camera {
     constructor() {
@@ -47,18 +47,20 @@ class Camera {
         this.queue = Promise.resolve();
         this.Module = null;
         this.context = null;
-    }
-
-    rethrowIfCritical(err) {
-        // If it's precisely Error, it's a custom error; anything else - SyntaxError,
-        // WebAssembly.RuntimeError, TypeError, etc. - is treated as critical here.
-        if (err.constructor !== Error) {
-            throw err;
-        }
+        this.ModulePromise = null;
     }
 
     async connect() {
-        this.Module = await ModulePromise;
+        if (!this.ModulePromise) {
+            this.ModulePromise = initializeModule().then(initModule => {
+                if (initModule) {
+                    return initModule();
+                } else {
+                    return null;
+                }
+            });
+        }
+        this.Module = await this.ModulePromise;
         this.context = await new this.Module.Context();
     }
 
@@ -69,7 +71,7 @@ class Camera {
      */
     async schedule(op) {
         let res = this.queue.then(() => op(this.context));
-        this.queue = res.catch(this.rethrowIfCritical);
+        this.queue = res.catch(rethrowIfCritical);
         return res;
     }
 
