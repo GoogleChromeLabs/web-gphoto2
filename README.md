@@ -113,10 +113,10 @@ To build, you'll need Docker. Then:
 
 ```bash
 ./build.sh # runs build in Docker
-npx serve ui # starts a local server with COOP/COEP
+npx serve examples/preact # starts a local server with COOP/COEP
 ```
 
-Then, navigate to http://localhost:5000/ in Chrome.
+Then, navigate to http://localhost:3000/ in Chrome.
 
 ## See also
 
