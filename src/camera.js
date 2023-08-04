@@ -40,6 +40,9 @@ export function rethrowIfCritical(err) {
   }
 }
 
+const INTERFACE_CLASS = 6; // PTP
+const INTERFACE_SUBCLASS = 1; // MTP
+
 class Camera {
   constructor() {
     /** @type {Promise<unknown>} */
@@ -47,6 +50,18 @@ class Camera {
     this.Module = null;
     this.context = null;
     this.ModulePromise = null;
+  }
+
+  async showCameraPicker() {
+    // @ts-ignore
+    await navigator.usb.requestDevice({
+      filters: [
+        {
+          classCode: INTERFACE_CLASS,
+          subclassCode: INTERFACE_SUBCLASS,
+        },
+      ],
+    });
   }
 
   async connect() {

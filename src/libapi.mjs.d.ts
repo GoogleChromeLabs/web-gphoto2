@@ -61,6 +61,7 @@ declare class Context {
 export declare class Camera {
   constructor();
 
+  showCameraPicker(): Promise<void>;
   connect(): Promise<void>;
   disconnect(): Promise<void>;
 
