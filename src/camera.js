@@ -31,14 +31,14 @@ const INTERFACE_SUBCLASS = 1; // MTP
 
 let ModulePromise = null;
 
-class Camera {
+export class Camera {
   constructor() {
     this.queue = Promise.resolve();
     this.Module = null;
     this.context = null;
   }
 
-  async showCameraPicker() {
+  static async showPicker() {
     // @ts-ignore
     await navigator.usb.requestDevice({
       filters: [
@@ -101,5 +101,3 @@ class Camera {
     return this.schedule((context) => context.consumeEvents());
   }
 }
-
-export { Camera };

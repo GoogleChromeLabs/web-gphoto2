@@ -4,7 +4,7 @@ import type { Config, Context, SupportedOps } from './libapi.mjs.d.ts';
 export declare class Camera {
     constructor();
 
-    showCameraPicker(): Promise<void>;
+    static showPicker(): Promise<void>;
     connect(): Promise<void>;
     disconnect(): Promise<void>;
 

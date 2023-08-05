@@ -41,9 +41,6 @@ declare interface SupportedOps {
 }
 
 declare class Context {
-  context(): Promise<any> {
-    throw new Error('Method not implemented.');
-  }
   configToJS(): Promise<Config & { type: 'window' }>;
   setConfigValue(
     name: string,
