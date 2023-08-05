@@ -18,7 +18,7 @@
 
 import { h, Component, createRef } from 'preact';
 
-/** @typedef {import('../libapi.mjs').Config} Config */
+/** @typedef {import('web-gphoto2').Config} Config */
 
 /**
  * @param {Config} config

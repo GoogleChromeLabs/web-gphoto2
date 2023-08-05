@@ -17,7 +17,7 @@
  */
 
 import { h, Component, createRef } from 'preact';
-import { rethrowIfCritical } from './ops.js';
+import { rethrowIfCritical } from 'web-gphoto2';
 
 export const isDebug = new URLSearchParams(location.search).has('debug');
 
