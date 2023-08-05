@@ -1,7 +1,8 @@
 {
   "name": "web-gphoto2",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "WebAssembly implementation of gphoto2 and libusb to control DSLR cameras over USB on the Web",
+  "type": "module",
   "main": "src/camera.js",
   "types": "src/libapi.mjs.d.ts",
   "scripts": {
