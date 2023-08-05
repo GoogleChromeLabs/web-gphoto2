@@ -78,9 +78,10 @@ npx serve examples/preact # starts a local server with COOP/COEP
 Then, navigate to http://localhost:3000/ in Chrome.
 
 ## Common Issues
-
-### SharedArrayBuffer can not be found
-
+<details>
+<summary>
+SharedArrayBuffer can not be found
+</summary>
 SharedArrayBuffer has been disabled across all browsers due to the Spectre vulnerability. This package uses SharedArrayBuffer to communicate with the WebAssembly module. To work around this issue, you need to set two response headers for your document:
 
 ```
@@ -89,9 +90,12 @@ Cross-Origin-Embedder-Policy: require-corp
 ```
 
 Information from [Stackoverflow](https://stackoverflow.com/questions/64650119/react-error-sharedarraybuffer-is-not-defined-in-firefox)
+</details>
 
-### Error: Not found: /node_modules/.vite/deps/libapi.wasm
-
+<details>
+<summary>
+ Error: Not found: /node_modules/.vite/deps/libapi.wasm
+ </summary>
 Vite tries to optimize the dependencies by default. This causes the WebAssembly module to be moved to a different location. To prevent this, you need to exclude the web-gphoto2 package from the optimization.
 
 In vite, both of the above mentioned issues are solved by adding the following to your vite.config.js:
@@ -119,6 +123,7 @@ export default defineConfig({
   },
 });
 ```
+</details>
 
 ## See also
 
