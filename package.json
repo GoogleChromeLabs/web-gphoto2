@@ -21,14 +21,14 @@
     "email": "me@rreverser.com",
     "url": "https://rreverser.com"
   },
-  "contributers": [
+  "contributors": [
     {
       "name": "Tjeerd Bakker",
       "email": "tjeerd992@gmail.com",
       "url": "https://icheered.com"
     }
   ],
-  "license": "LGPLv2.1",
+  "license": "LGPL-2.1-or-later",
   "bugs": {
     "url": "https://github.com/GoogleChromeLabs/web-gphoto2/issues"
   },
