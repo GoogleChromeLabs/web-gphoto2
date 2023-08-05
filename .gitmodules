@@ -4,5 +4,4 @@
 	branch = em
 [submodule "libusb"]
 	path = deps/libusb
-	url = https://github.com/RReverser/libusb
-	branch = em
+	url = https://github.com/libusb/libusb
