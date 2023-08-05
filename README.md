@@ -7,7 +7,6 @@ Powered by a [custom fork](https://github.com/RReverser/libgphoto2) of [libgphot
 # NPM
 
 ## Installation
-
 ```bash
 npm install web-gphoto2
 // or
@@ -15,7 +14,6 @@ yarn add web-gphoto2
 ```
 
 ## Usage
-
 A short example on how to use this package:
 
 ```ts
@@ -43,15 +41,41 @@ async function updateConfig() {
 }
 
 async function capturePreviewAsBlob() {
+  // Capture a frame while in live view mode
   const blob = await camera.capturePreviewAsBlob();
-  console.log("Blob:", blob);
+  imageUrl = URL.createObjectURL(blob);
+  // Set the imageUrl as the src of an image element in your HTML
 }
 
 async function captureImageAsFile() {
+  // Capture an image
   const file = await camera.captureImageAsFile();
-  console.log("File:", file);
+  imageUrl = URL.createObjectURL(file);
+  // Set the imageUrl as the src of an image element in your HTML
 }
 ```
+
+# Demo
+
+This repository also contains a [demo app](https://web.dev/porting-libusb-to-webusb/) running gPhoto2 on the Web:
+![A picture of DSLR camera connected via a USB cable to a laptop. The laptop is running the Web demo mentioned in the article, which mirrors a live video feed from the camera as well as allows to tweak its settings via form controls.](https://web-dev.imgix.net/image/9oK23mr86lhFOwKaoYZ4EySNFp02/MR4YGRvl0Z9AWT6vv3sQ.jpg?auto=format&w=1600)
+
+For the detailed technical write-up, see [the official blog post](https://web.dev/porting-libusb-to-webusb/). To see the demo in action, visit the hosted version [here](https://web-gphoto2.rreverser.com/) (but make sure to read the [cross-platform compatibility notes](https://web.dev/porting-libusb-to-webusb/#important-cross-platform-compatibility-notes) first).
+
+If you don't have a DSLR, you can check out a recording of the demo below:
+
+https://user-images.githubusercontent.com/557590/152155035-a1664656-a7d9-411f-8cb3-5f04320f1391.mp4
+
+## Building
+
+To build, you'll need Docker. Then:
+
+```bash
+./build.sh # runs build in Docker
+npx serve examples/preact # starts a local server with COOP/COEP
+```
+
+Then, navigate to http://localhost:3000/ in Chrome.
 
 ## Common Issues
 
@@ -95,28 +119,6 @@ export default defineConfig({
   },
 });
 ```
-
-# Demo
-
-This repository also contains a [demo app](https://web.dev/porting-libusb-to-webusb/) running gPhoto2 on the Web:
-![A picture of DSLR camera connected via a USB cable to a laptop. The laptop is running the Web demo mentioned in the article, which mirrors a live video feed from the camera as well as allows to tweak its settings via form controls.](https://web-dev.imgix.net/image/9oK23mr86lhFOwKaoYZ4EySNFp02/MR4YGRvl0Z9AWT6vv3sQ.jpg?auto=format&w=1600)
-
-For the detailed technical write-up, see [the official blog post](https://web.dev/porting-libusb-to-webusb/). To see the demo in action, visit the hosted version [here](https://web-gphoto2.rreverser.com/) (but make sure to read the [cross-platform compatibility notes](https://web.dev/porting-libusb-to-webusb/#important-cross-platform-compatibility-notes) first).
-
-If you don't have a DSLR, you can check out a recording of the demo below:
-
-https://user-images.githubusercontent.com/557590/152155035-a1664656-a7d9-411f-8cb3-5f04320f1391.mp4
-
-## Building
-
-To build, you'll need Docker. Then:
-
-```bash
-./build.sh # runs build in Docker
-npx serve examples/preact # starts a local server with COOP/COEP
-```
-
-Then, navigate to http://localhost:3000/ in Chrome.
 
 ## See also
 

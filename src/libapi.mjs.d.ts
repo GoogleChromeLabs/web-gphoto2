@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-export type Config = {
+type Config = {
   name: string;
   info: string;
   label: string;
@@ -58,32 +58,11 @@ declare class Context {
   isDeleted(): boolean;
 }
 
-export declare class Camera {
-  constructor();
-
-  showCameraPicker(): Promise<void>;
-  connect(): Promise<void>;
-  disconnect(): Promise<void>;
-
-  getConfig(): Promise<any>; // replace "any" with the actual type of the config if you have it
-
-  getSupportedOps(): SupportedOps;
-
-  setConfigValue(name: string, value: number | string | boolean): Promise<void>;
-
-  capturePreviewAsBlob(): Promise<Blob>;
-  captureImageAsFile(): Promise<File>;
-  consumeEvents(): Promise<boolean>;
-
-  private rethrowIfCritical(err: any): void;  // any error type can be replaced by more specific if available
-  private schedule<T>(op: (ctx: any) => Promise<T>): Promise<T>;  // ctx and T types can be replaced by more specific if available
-}
-
 export interface Module extends EmscriptenModule {
   Context: typeof Context;
 }
 
-export type { Context };
+export type { Config, Context, SupportedOps };
 
 declare const initModule: EmscriptenModuleFactory<Module>;
 export default initModule;

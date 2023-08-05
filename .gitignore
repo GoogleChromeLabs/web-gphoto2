@@ -4,6 +4,7 @@
 !/deps/libgphoto2
 !/deps/libusb
 /api.o
+examples/svelte
 
 # Local Netlify folder
 .netlify

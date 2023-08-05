@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2023 Google LLC
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,21 +16,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/** @typedef {import('./libapi.mjs.d.ts').Context} Context */
-
-// To avoid errors for users who use SSR or Hybrid rendering (e.g. Nuxt.js), we need to check if we're in the browser.
-let initModule;
-
-async function initializeModule() {
-  if (typeof window !== "undefined") {
-    const module = await import("../build/libapi.mjs");
-    initModule = module.default;
-    return initModule;
-  } else {
-    console.warn("web-gphoto2 is only available in the browser");
-    return null;
-  }
-}
+/**
+ * @typedef {import('./libapi.mjs').Config} Config
+ * @typedef {import('./libapi.mjs').SupportedOps} SupportedOps
+ * @typedef {import('./libapi.mjs').Context} Context
+ */
+import initModule from "../build/libapi.mjs";
 
 export function rethrowIfCritical(err) {
   // If it's precisely Error, it's a custom error; anything else - SyntaxError,
@@ -43,6 +34,9 @@ export function rethrowIfCritical(err) {
 const INTERFACE_CLASS = 6; // PTP
 const INTERFACE_SUBCLASS = 1; // MTP
 
+/**
+ * This class provides methods for interacting with the camera.
+ */
 class Camera {
   constructor() {
     /** @type {Promise<unknown>} */
@@ -52,6 +46,10 @@ class Camera {
     this.ModulePromise = null;
   }
 
+  /**
+   * This method shows the camera picker.
+   * @returns {Promise<void>}
+   */
   async showCameraPicker() {
     // @ts-ignore
     await navigator.usb.requestDevice({
@@ -64,24 +62,24 @@ class Camera {
     });
   }
 
+  /**
+   * This method connects to the camera.
+   * @returns {Promise<void>}
+   */
   async connect() {
     if (!this.ModulePromise) {
-      this.ModulePromise = initializeModule().then((initModule) => {
-        if (initModule) {
-          return initModule();
-        } else {
-          return null;
-        }
-      });
+      this.ModulePromise = initModule()
     }
     this.Module = await this.ModulePromise;
     this.context = await new this.Module.Context();
   }
 
-  /** Schedules an exclusive async operation on the global context.
+  /**
+   * This method schedules an exclusive async operation on the global context.
    * @template T
    * @param {(ctx: Context) => Promise<T>} op
    * @returns {Promise<T>}
+   * @private
    */
   async schedule(op) {
     let res = this.queue.then(() => op(this.context));
@@ -89,16 +87,28 @@ class Camera {
     return res;
   }
 
+  /**
+   * This method disconnects from the camera.
+   * @returns {Promise<void>}
+   */
   async disconnect() {
     if (!this.context.isDeleted()) {
       this.context.delete();
     }
   }
 
+  /**
+   * This method gets the camera configuration.
+   * @returns {Promise<Config>}
+   */
   async getConfig() {
     return this.schedule((context) => context.configToJS());
   }
 
+  /**
+   * This method gets the supported operations of the camera.
+   * @returns {Promise<SupportedOps>}
+   */
   async getSupportedOps() {
     if (this.context) {
       return await this.context.supportedOps();
@@ -106,23 +116,40 @@ class Camera {
     throw new Error("You need to connect to the camera first");
   }
 
+  /**
+   * This method sets a configuration value on the camera.
+   * @param {string} name
+   * @param {number | string | boolean} value
+   * @returns {Promise<void>}
+   */
   async setConfigValue(name, value) {
     const uiTimeout = new Promise((resolve) => setTimeout(resolve, 800));
     const setResult = this.schedule((context) =>
       context.setConfigValue(name, value)
     );
-    // wait for both the config set operation and the timeout to complete
     return Promise.all([setResult, uiTimeout]);
   }
 
+  /**
+   * This method captures a preview as a Blob.
+   * @returns {Promise<Blob>}
+   */
   async capturePreviewAsBlob() {
     return this.schedule((context) => context.capturePreviewAsBlob());
   }
 
+  /**
+   * This method captures an image as a File.
+   * @returns {Promise<File>}
+   */
   async captureImageAsFile() {
     return this.schedule((context) => context.captureImageAsFile());
   }
 
+  /**
+   * This method consumes camera events.
+   * @returns {Promise<boolean>}
+   */
   async consumeEvents() {
     return this.schedule((context) => context.consumeEvents());
   }

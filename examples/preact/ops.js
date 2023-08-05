@@ -25,8 +25,7 @@ const ModulePromise = initModule();
 export function rethrowIfCritical(err) {
   // If it's precisely Error, it's a custom error; anything else - SyntaxError,
   // WebAssembly.RuntimeError, TypeError, etc. - is treated as critical here.
-  if (err.constructor !== Error)
-  {
+  if (err.constructor !== Error) {
     throw err;
   }
 }
@@ -45,8 +44,7 @@ export async function connect() {
    * @param {(ctx: Context) => Promise<T>} op
    * @returns {Promise<T>}
    */
-  function schedule(op)
-  {
+  function schedule(op) {
     let res = queue.then(() => op(context));
     queue = res.catch(rethrowIfCritical);
     return res;
