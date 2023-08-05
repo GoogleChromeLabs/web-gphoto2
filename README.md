@@ -66,10 +66,23 @@ If you don't have a DSLR, you can check out a recording of the demo below:
 
 ## Building
 
-To build the WebAssembly part of the repo, you'll need Docker. Then:
+To build the WebAssembly part of the repo, you'll need Docker on Linux (WSL works too) or macOS machine. Then:
 
 ```bash
-./build.sh # runs build in Docker
+npm run build:wasm # runs build in Docker
+```
+
+If you are just updating the JS library (`src/camera.ts`), then it's enough to do
+
+```bash
+npm run build:ts
+```
+
+on any system as Wasm parts are committed to this repo.
+
+To serve the demo, run:
+
+```bash
 npx serve examples/preact # starts a local server with COOP/COEP
 ```
 
@@ -84,8 +97,10 @@ SharedArrayBuffer can not be found
 SharedArrayBuffer has been disabled across all browsers due to the Spectre vulnerability. This package uses SharedArrayBuffer to communicate with the WebAssembly module. To work around this issue, you need to set two response headers for your document:
 
 ```
+
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
+
 ```
 
 Information from [Stackoverflow](https://stackoverflow.com/questions/64650119/react-error-sharedarraybuffer-is-not-defined-in-firefox)
