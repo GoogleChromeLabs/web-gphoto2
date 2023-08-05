@@ -1,6 +1,4 @@
 /.vscode/c_cpp_properties.json
-/ui/libapi.*
-!/ui/libapi.mjs.d.ts
 /node_modules
 /deps/*
 !/deps/libgphoto2

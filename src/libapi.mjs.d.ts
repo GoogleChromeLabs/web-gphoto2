@@ -16,20 +16,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-export type Config = {
+type Config = {
   name: string;
   info: string;
   label: string;
   readonly: boolean;
 } & (
-  | { type: 'range'; value: number; min: number; max: number; step: number }
-  | { type: 'menu' | 'radio'; value: string; choices: string[] }
-  | { type: 'toggle'; value: boolean }
-  | { type: 'text'; value: string }
-  | { type: 'window'; children: Record<string, Config> }
-  | { type: 'section'; children: Record<string, Config> }
-  | { type: 'datetime'; value: number }
-);
+    | { type: 'range'; value: number; min: number; max: number; step: number }
+    | { type: 'menu' | 'radio'; value: string; choices: string[] }
+    | { type: 'toggle'; value: boolean }
+    | { type: 'text'; value: string }
+    | { type: 'window'; children: Record<string, Config> }
+    | { type: 'section'; children: Record<string, Config> }
+    | { type: 'datetime'; value: number }
+  );
 
 declare interface SupportedOps {
   captureImage: boolean;
@@ -59,7 +59,7 @@ export interface Module extends EmscriptenModule {
   Context: typeof Context;
 }
 
-export type { Context };
+export type { Config, Context, SupportedOps };
 
 declare const initModule: EmscriptenModuleFactory<Module>;
 export default initModule;

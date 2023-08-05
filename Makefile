@@ -5,7 +5,7 @@ export LDFLAGS += -L$(SYSROOT)/lib
 export ACLOCAL_PATH := $(SYSROOT)/share/aclocal:$(ACLOCAL_PATH)
 
 # Common linking flags for all targets.
-export LDFLAGS += -s DYNAMIC_EXECUTION=0 -s AUTO_JS_LIBRARIES=0 -s AUTO_NATIVE_LIBRARIES=0
+export LDFLAGS += -s DYNAMIC_EXECUTION=0 -s AUTO_JS_LIBRARIES=0 -s AUTO_NATIVE_LIBRARIES=0 -s ENVIRONMENT=web,worker
 
 # Common compilation & linking flags for all langs and targets.
 COMMON_FLAGS = -Os -flto
@@ -15,7 +15,7 @@ export LDFLAGS += $(COMMON_FLAGS)
 
 ## Main API module
 
-ui/libapi.mjs: api.o $(SYSROOT)/lib/libltdl.la $(SYSROOT)/lib/libgphoto2.la
+build/libapi.mjs: api.o $(SYSROOT)/lib/libltdl.la $(SYSROOT)/lib/libgphoto2.la
 	libtool --verbose --mode=link $(LD) $(LDFLAGS) -o $@ $+ \
 		-fexceptions --bind -s ASYNCIFY -s ALLOW_MEMORY_GROWTH \
 		-dlpreopen $(SYSROOT)/lib/libgphoto2/2.5.28.1/ptp2.la \

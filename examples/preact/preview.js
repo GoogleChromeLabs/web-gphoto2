@@ -23,8 +23,8 @@ export const isDebug = new URLSearchParams(location.search).has('debug');
 
 const Stats = isDebug
   ? await import('stats.js').then(
-      res => /** @type {typeof import('stats.js')} */ (res['default'])
-    )
+    res => /** @type {typeof import('stats.js')} */(res['default'])
+  )
   : null;
 
 /** @extends Component<{ getPreview?: () => Promise<Blob> }, { error?: string }> */
@@ -96,9 +96,9 @@ export class Preview extends Component {
           blob,
           ratio
             ? {
-                resizeWidth: canvas.width,
-                resizeHeight: canvas.height
-              }
+              resizeWidth: canvas.width,
+              resizeHeight: canvas.height
+            }
             : {}
         );
         if (!ratio) {

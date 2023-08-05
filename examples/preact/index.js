@@ -22,9 +22,9 @@ import { connect, rethrowIfCritical } from './ops.js';
 import { Preview } from './preview.js';
 import { Widget } from './widget.js';
 
-/** @typedef {import('../libapi.mjs').Context} Context */
-/** @typedef {import('../libapi.mjs').Config} Config */
-/** @typedef {import('./ops').Connection} Connection */
+/** @typedef {import('./build/libapi.mjs').Context} Context */
+/** @typedef {import('./build/libapi.mjs').Config} Config */
+/** @typedef {import('./ops.js').Connection} Connection */
 
 export const isDebug = new URLSearchParams(location.search).has('debug');
 

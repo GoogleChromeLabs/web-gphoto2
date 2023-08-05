@@ -1,4 +1,43 @@
 {
+  "name": "web-gphoto2",
+  "version": "1.0.0",
+  "description": "WebAssembly implementation of gphoto2 and libusb to control DSLR cameras over USB on the Web",
+  "type": "module",
+  "main": "src/camera.js",
+  "types": "src/types.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/web-gphoto2"
+  },
+  "keywords": [
+    "gphoto2",
+    "libusb",
+    "webassembly"
+  ],
+  "author": {
+    "name": "Ingvar Stepanyan",
+    "email": "me@rreverser.com",
+    "url": "https://rreverser.com"
+  },
+  "contributors": [
+    {
+      "name": "Tjeerd Bakker",
+      "email": "tjeerd992@gmail.com",
+      "url": "https://icheered.com"
+    }
+  ],
+  "license": "LGPL-2.1-or-later",
+  "bugs": {
+    "url": "https://github.com/GoogleChromeLabs/web-gphoto2/issues"
+  },
+  "homepage": "https://github.com/GoogleChromeLabs/web-gphoto2#readme",
+  "files": [
+    "src/*",
+    "build/*"
+  ],
   "devDependencies": {
     "@types/emscripten": "^1.39.5",
     "@types/requestidlecallback": "^0.3.4",

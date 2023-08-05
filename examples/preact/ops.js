@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-import initModule from '../libapi.mjs';
+import initModule from './build/libapi.mjs';
 
 /** @typedef {import('../libapi.mjs').Context} Context */
 
