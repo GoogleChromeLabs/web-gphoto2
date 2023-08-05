@@ -34,6 +34,8 @@ export function rethrowIfCritical(err) {
 const INTERFACE_CLASS = 6; // PTP
 const INTERFACE_SUBCLASS = 1; // MTP
 
+let ModulePromise = null;
+
 /**
  * This class provides methods for interacting with the camera.
  */
@@ -43,7 +45,6 @@ class Camera {
     this.queue = Promise.resolve();
     this.Module = null;
     this.context = null;
-    this.ModulePromise = null;
   }
 
   /**
@@ -67,10 +68,10 @@ class Camera {
    * @returns {Promise<void>}
    */
   async connect() {
-    if (!this.ModulePromise) {
-      this.ModulePromise = initModule()
+    if (!ModulePromise) {
+      ModulePromise = initModule()
     }
-    this.Module = await this.ModulePromise;
+    this.Module = await ModulePromise;
     this.context = await new this.Module.Context();
   }
 
