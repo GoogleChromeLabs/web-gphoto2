@@ -17,7 +17,7 @@ yarn add web-gphoto2
 A short example on how to use this package:
 
 ```ts
-import Camera from "web-gphoto2";
+import { Camera } from "web-gphoto2";
 
 let camera = new Camera();
 
