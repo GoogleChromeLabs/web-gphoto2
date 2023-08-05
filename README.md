@@ -14,43 +14,38 @@ npm install web-gphoto2
 
 A short example on how to use this package:
 
-```ts
+```js
 import { Camera } from "web-gphoto2";
 
 let camera = new Camera();
 
-async function connectCamera() {
-  await Camera.showPicker();
-  await camera.connect();
-}
+// Triggers the browser's native USB picker listing all connected cameras.
+await Camera.showPicker();
 
-async function getSupportedOps() {
-  const ops = await camera.getSupportedOps();
-  console.log("Supported Ops:", ops);
-}
+// Connects to the camera exposed in the previous step.
+// In the future we might allow to connect to multiple cameras by passing a specific instance.
+await camera.connect();
 
-async function getCameraConfig() {
-  const config = await camera.getConfig();
-  console.log("Config:", config);
-}
+console.log("Operations supported by the camera:", await camera.getSupportedOps());
 
-async function updateConfig() {
-  await camera.setConfigValue("iso", "800");
-}
+console.log("Current configuration tree:", await camera.getConfig());
 
-async function capturePreviewAsBlob() {
-  // Capture a frame while in live view mode
-  const blob = await camera.capturePreviewAsBlob();
-  imageUrl = URL.createObjectURL(blob);
-  // Set the imageUrl as the src of an image element in your HTML
-}
+// Update camera configuration by the setting's name.
+await camera.setConfigValue("iso", "800");
 
-async function captureImageAsFile() {
-  // Capture an image
-  const file = await camera.captureImageAsFile();
-  imageUrl = URL.createObjectURL(file);
-  // Set the imageUrl as the src of an image element in your HTML
-}
+// Capture a lower-quality preview frame, useful for high-FPS live view stream.
+// Returns a Blob with image mime type and contents.
+const blob = await camera.capturePreviewAsBlob();
+// Use `URL.createObjectURL` to create an image URL from the blob or `createImageBitmap` to decode it directly.
+const img = new Image();
+img.src = URL.createObjectURL(blob);
+
+// Capture a full-resolution image in format currently selected on the camera (JPEG or RAW).
+// This can be used in the same way as Blob above, but also has extra information such as filename useful for download.
+const file = await camera.captureImageAsFile();
+const a = document.createElement("a");
+a.href = URL.createObjectURL(file);
+a.download = file.name;
 ```
 
 ## Demo
@@ -96,11 +91,9 @@ SharedArrayBuffer can not be found
 </summary>
 SharedArrayBuffer has been disabled across all browsers due to the Spectre vulnerability. This package uses SharedArrayBuffer to communicate with the WebAssembly module. To work around this issue, you need to set two response headers for your document:
 
-```
-
+```http
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
-
 ```
 
 Information from [Stackoverflow](https://stackoverflow.com/questions/64650119/react-error-sharedarraybuffer-is-not-defined-in-firefox)
@@ -114,7 +107,7 @@ Vite tries to optimize the dependencies by default. This causes the WebAssembly 
 
 In vite, both of the above mentioned issues are solved by adding the following to your vite.config.js:
 
-```ts
+```js
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 
