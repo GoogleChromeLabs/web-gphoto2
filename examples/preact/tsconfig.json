@@ -1,11 +1,9 @@
 {
   "compilerOptions": {
+    "checkJs": true,
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "Node",
-    "strict": true,
-    "declaration": true,
-    "outDir": "build"
-  },
-  "include": ["src/camera.ts"]
+    "noEmit": true
+  }
 }

@@ -1,5 +1,5 @@
 /.vscode/c_cpp_properties.json
-/node_modules
+node_modules
 /deps/*
 !/deps/libgphoto2
 !/deps/libusb

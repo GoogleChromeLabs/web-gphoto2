@@ -4,16 +4,14 @@ A gPhoto2 implementation using WebAssembly to control DSLR cameras from the brow
 
 Powered by a [custom fork](https://github.com/RReverser/libgphoto2) of [libgphoto2](https://github.com/gphoto/libgphoto2), the [WebUSB](https://github.com/WICG/webusb) backend of [libusb](https://github.com/libusb/libusb), and WebAssembly via [Emscripten](https://emscripten.org/).
 
-# NPM
-
 ## Installation
+
 ```bash
 npm install web-gphoto2
-// or
-yarn add web-gphoto2
 ```
 
 ## Usage
+
 A short example on how to use this package:
 
 ```ts
@@ -55,7 +53,7 @@ async function captureImageAsFile() {
 }
 ```
 
-# Demo
+## Demo
 
 This repository also contains a [demo app](https://web.dev/porting-libusb-to-webusb/) running gPhoto2 on the Web:
 ![A picture of DSLR camera connected via a USB cable to a laptop. The laptop is running the Web demo mentioned in the article, which mirrors a live video feed from the camera as well as allows to tweak its settings via form controls.](https://web-dev.imgix.net/image/9oK23mr86lhFOwKaoYZ4EySNFp02/MR4YGRvl0Z9AWT6vv3sQ.jpg?auto=format&w=1600)
@@ -64,20 +62,21 @@ For the detailed technical write-up, see [the official blog post](https://web.de
 
 If you don't have a DSLR, you can check out a recording of the demo below:
 
-https://user-images.githubusercontent.com/557590/152155035-a1664656-a7d9-411f-8cb3-5f04320f1391.mp4
+<https://user-images.githubusercontent.com/557590/152155035-a1664656-a7d9-411f-8cb3-5f04320f1391.mp4>
 
 ## Building
 
-To build, you'll need Docker. Then:
+To build the WebAssembly part of the repo, you'll need Docker. Then:
 
 ```bash
 ./build.sh # runs build in Docker
 npx serve examples/preact # starts a local server with COOP/COEP
 ```
 
-Then, navigate to http://localhost:3000/ in Chrome.
+Then, navigate to <http://localhost:3000/> in Chrome.
 
 ## Common Issues
+
 <details>
 <summary>
 SharedArrayBuffer can not be found
@@ -123,6 +122,7 @@ export default defineConfig({
   },
 });
 ```
+
 </details>
 
 ## See also
