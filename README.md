@@ -22,7 +22,7 @@ import { Camera } from "web-gphoto2";
 let camera = new Camera();
 
 async function connectCamera() {
-  await camera.showCameraPicker();
+  await Camera.showPicker();
   await camera.connect();
 }
 
