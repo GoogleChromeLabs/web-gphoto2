@@ -5,6 +5,8 @@
   "exports": {
     "import": "./build/camera.js"
   },
+  "module": "./build/camera.js",
+  "browser": "./build/camera.js",
   "types": "build/camera.d.ts",
   "scripts": {
     "build:wasm": "./build.sh",
