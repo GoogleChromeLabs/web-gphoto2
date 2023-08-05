@@ -16,11 +16,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/**
- * @typedef {import('./libapi.mjs').Config} Config
- * @typedef {import('./libapi.mjs').SupportedOps} SupportedOps
- * @typedef {import('./libapi.mjs').Context} Context
- */
 import initModule from "../build/libapi.mjs";
 
 export function rethrowIfCritical(err) {
@@ -36,21 +31,13 @@ const INTERFACE_SUBCLASS = 1; // MTP
 
 let ModulePromise = null;
 
-/**
- * This class provides methods for interacting with the camera.
- */
 class Camera {
   constructor() {
-    /** @type {Promise<unknown>} */
     this.queue = Promise.resolve();
     this.Module = null;
     this.context = null;
   }
 
-  /**
-   * This method shows the camera picker.
-   * @returns {Promise<void>}
-   */
   async showCameraPicker() {
     // @ts-ignore
     await navigator.usb.requestDevice({
@@ -63,10 +50,6 @@ class Camera {
     });
   }
 
-  /**
-   * This method connects to the camera.
-   * @returns {Promise<void>}
-   */
   async connect() {
     if (!ModulePromise) {
       ModulePromise = initModule()
@@ -75,41 +58,22 @@ class Camera {
     this.context = await new this.Module.Context();
   }
 
-  /**
-   * This method schedules an exclusive async operation on the global context.
-   * @template T
-   * @param {(ctx: Context) => Promise<T>} op
-   * @returns {Promise<T>}
-   * @private
-   */
   async schedule(op) {
     let res = this.queue.then(() => op(this.context));
     this.queue = res.catch(rethrowIfCritical);
     return res;
   }
 
-  /**
-   * This method disconnects from the camera.
-   * @returns {Promise<void>}
-   */
   async disconnect() {
     if (!this.context.isDeleted()) {
       this.context.delete();
     }
   }
 
-  /**
-   * This method gets the camera configuration.
-   * @returns {Promise<Config>}
-   */
   async getConfig() {
     return this.schedule((context) => context.configToJS());
   }
 
-  /**
-   * This method gets the supported operations of the camera.
-   * @returns {Promise<SupportedOps>}
-   */
   async getSupportedOps() {
     if (this.context) {
       return await this.context.supportedOps();
@@ -117,12 +81,6 @@ class Camera {
     throw new Error("You need to connect to the camera first");
   }
 
-  /**
-   * This method sets a configuration value on the camera.
-   * @param {string} name
-   * @param {number | string | boolean} value
-   * @returns {Promise<void>}
-   */
   async setConfigValue(name, value) {
     const uiTimeout = new Promise((resolve) => setTimeout(resolve, 800));
     const setResult = this.schedule((context) =>
@@ -131,29 +89,17 @@ class Camera {
     return Promise.all([setResult, uiTimeout]);
   }
 
-  /**
-   * This method captures a preview as a Blob.
-   * @returns {Promise<Blob>}
-   */
   async capturePreviewAsBlob() {
     return this.schedule((context) => context.capturePreviewAsBlob());
   }
 
-  /**
-   * This method captures an image as a File.
-   * @returns {Promise<File>}
-   */
   async captureImageAsFile() {
     return this.schedule((context) => context.captureImageAsFile());
   }
 
-  /**
-   * This method consumes camera events.
-   * @returns {Promise<boolean>}
-   */
   async consumeEvents() {
     return this.schedule((context) => context.consumeEvents());
   }
 }
 
-export default Camera;
+export { Camera };

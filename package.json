@@ -4,7 +4,7 @@
   "description": "WebAssembly implementation of gphoto2 and libusb to control DSLR cameras over USB on the Web",
   "type": "module",
   "main": "src/camera.js",
-  "types": "src/libapi.mjs.d.ts",
+  "types": "src/types.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
