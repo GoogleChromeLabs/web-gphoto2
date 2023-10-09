@@ -29,3 +29,6 @@ docker run --rm $DOCKER_INTERACTIVE_OPTS \
 	-u $(id -u):$(id -g) \
 	web-gphoto2 \
 	$@
+
+# Force web worker to be a module
+sed -i 's/new URL("libapi.worker.js",import.meta.url)/new URL("libapi.worker.js",import.meta.url, {type: "module"})/g' build/libapi.mjs
