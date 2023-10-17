@@ -1,4 +1,4 @@
-SYSROOT = $(EM_CACHE)/sysroot
+SYSROOT = /emsdk/upstream/emscripten/cache/sysroot
 
 # Add custom sysroot to library & macro search paths.
 export LDFLAGS += -L$(SYSROOT)/lib
@@ -6,6 +6,8 @@ export ACLOCAL_PATH := $(SYSROOT)/share/aclocal:$(ACLOCAL_PATH)
 
 # Common linking flags for all targets.
 export LDFLAGS += -s DYNAMIC_EXECUTION=0 -s AUTO_JS_LIBRARIES=0 -s AUTO_NATIVE_LIBRARIES=0
+# Temporary workaround for https://github.com/emscripten-core/emscripten/issues/16836.
+export LDFLAGS += -Wl,-u,ntohs
 
 # Common compilation & linking flags for all langs and targets.
 COMMON_FLAGS = -Os -flto

@@ -16,16 +16,15 @@
 # License along with this library; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
-if [ -z "$CI" ]
-then
+if [ -z "$CI" ]; then
 	DOCKER_INTERACTIVE_OPTS="-it"
 else
 	DOCKER_INTERACTIVE_OPTS=""
 fi
 
-docker build -t web-gphoto2 - < Dockerfile
+docker build -t web-gphoto2 - <Dockerfile
 docker run --rm $DOCKER_INTERACTIVE_OPTS \
 	-v $PWD:/src \
-	-u $(id -u):$(id -g) \
+	-v $PWD/deps/.emcache:/emsdk/upstream/emscripten/cache \
 	web-gphoto2 \
 	$@
