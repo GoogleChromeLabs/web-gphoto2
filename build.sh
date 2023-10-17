@@ -23,7 +23,9 @@ else
 fi
 
 docker build -t web-gphoto2 - <Dockerfile
+mkdir -p deps/.emcache
 docker run --rm $DOCKER_INTERACTIVE_OPTS \
+	-u $(id -u):$(id -g) \
 	-v $PWD:/src \
 	-v $PWD/deps/.emcache:/emsdk/upstream/emscripten/cache \
 	web-gphoto2 \
