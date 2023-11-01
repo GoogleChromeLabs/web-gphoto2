@@ -3,4 +3,5 @@ node_modules
 /deps/*
 !/deps/libgphoto2
 !/deps/libusb
+!/deps/libtool
 /src/api.o

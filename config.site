@@ -1,16 +1,13 @@
 # Set host to switch autotools into cross-compilation mode.
-host_alias=$($CC $CFLAGS -print-target-triple /dev/null -E)
-# Autotools complain about system 'emscripten' not being recognised.
-# We can forcefully pass it anyway by overriding the cached variable
-# in addition to host_alias, so that autotools skips the validation.
-host_alias=$(echo $host_alias | cut -d- -f1)-unknown-linux-gnu
+host_alias=$($CC $CFLAGS -dumpmachine)
+# But it doesn't believe it's cross-compiling, because generated JS files are executable as if they were native.
 cross_compiling=yes
-# cross_compiling=yes
 # Ignore warnings about "using cross tools not prefixed with host triplet".
 # We could set custom tools prefix, but that would be redundant because we already
 # provide all the tools via env variables, and when prefix is provided,
 # autotools starts checking both prefixed and unprefixed variants for every single
-# missing tool, lengthening the build.
+# missing tool (e.g. `emgcc` and `gcc`, `emgawk` and `gawk` and so on), unnecessarily
+# lengthening the build.
 ac_tool_warned=yes
 # Set prefix for installations to the Emscripten's sysroot.
 prefix=$(em-config CACHE)/sysroot

@@ -2,6 +2,12 @@
 	path = deps/libgphoto2
 	url = https://github.com/RReverser/libgphoto2
 	branch = em
+	shallow = true
 [submodule "libusb"]
 	path = deps/libusb
 	url = https://github.com/libusb/libusb
+	shallow = true
+[submodule "deps/libtool"]
+	path = deps/libtool
+	url = https://github.com/autotools-mirror/libtool
+	shallow = true
