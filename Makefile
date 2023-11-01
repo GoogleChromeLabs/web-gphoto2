@@ -34,7 +34,7 @@ deps/%/configure: deps/%/configure.ac
 	cd $(@D) && autoreconf -fiv
 
 deps/%/Makefile: deps/%/configure
-	cd $(@D) && ./configure $(CONFIGURE_ARGS)
+	cd $(@D) && emconfigure ./configure
 
 deps/%/.installed: deps/%/Makefile
 	$(MAKE) -C $(@D) install
@@ -49,6 +49,4 @@ deps/libtool/configure:
 ## libgphoto2
 
 deps/libgphoto2/Makefile: deps/libtool/.installed deps/libusb/.installed
-deps/libgphoto2/Makefile: CONFIGURE_ARGS = \
-	--without-libxml-2.0 --disable-nls --disable-ptpip --disable-disk \
-	--with-camlibs=ptp2
+	cd $(@D) && emconfigure ./configure --without-libxml-2.0 --disable-nls --disable-ptpip --disable-disk --with-camlibs=ptp2

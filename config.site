@@ -1,9 +1,11 @@
 # Set host to switch autotools into cross-compilation mode.
-wasm_arch=$($CC $CFLAGS --print-target-triple /dev/null -E | grep -oE '^wasm(32|64)')
+host_alias=$($CC $CFLAGS -print-target-triple /dev/null -E)
 # Autotools complain about system 'emscripten' not being recognised.
-# We can forcefully pass it anyway, but then most projects still wouldn't know what to do with this OS.
-# Emscripten emulates Unix fairly well, so let's construct `wasmNN-unknown-linux-gnu` triplet instead.
-host_alias=$wasm_arch-unknown-emscripten
+# We can forcefully pass it anyway by overriding the cached variable
+# in addition to host_alias, so that autotools skips the validation.
+host_alias=$(echo $host_alias | cut -d- -f1)-unknown-linux-gnu
+cross_compiling=yes
+# cross_compiling=yes
 # Ignore warnings about "using cross tools not prefixed with host triplet".
 # We could set custom tools prefix, but that would be redundant because we already
 # provide all the tools via env variables, and when prefix is provided,
@@ -11,18 +13,13 @@ host_alias=$wasm_arch-unknown-emscripten
 # missing tool, lengthening the build.
 ac_tool_warned=yes
 # Set prefix for installations to the Emscripten's sysroot.
-prefix=$EMSDK/upstream/emscripten/cache/sysroot
-# Use multiroot path for libraries depending on target.
-# Note that it uses names like wasmNN-emscripten, not wasmNN-unknown-emscripten.
-libdir=$prefix/lib/$wasm_arch-emscripten
+prefix=$(em-config CACHE)/sysroot
+# Find the multiarch libdir which can vary depending on CFLAGS.
+libdir=$($CC $CFLAGS -print-search-dirs | grep -oP 'libraries: =\K(.*)' | tr ':' '\n' | grep "^$prefix")
 # --with-sysroot is mainly used by libtool and libs that use it.
 with_sysroot=$prefix
-# Create cache file, but be careful to put it into target-specific file.
-cache_file="$prefix/var/$wasm_arch.cache"
+# Create cache file, but be careful to put it into a target-specific file.
+cache_file="$prefix/var/$host_alias.cache"
 mkdir -p $(dirname $cache_file)
-# Explicitly tell autotools that we can't build shared libs, because
-# we really can't, even though the automatic check succeeds due to us
-# silently changing them to static ones.
-can_build_shared=no
 # Set suffix for executables, matching CMake behaviour.
 ac_exeext=.js
