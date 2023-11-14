@@ -24,12 +24,13 @@ src/api.o: CXXFLAGS += -std=c++17 -fexceptions
 
 ## Generic rules for deps
 
-deps:
+deps/.submodules:
 	git submodule update --init
+	touch $@
 
 # Make sure to regenerate all `configure` scripts with latest autotools,
 # as those generated with older versions didn't support wasm32 targets.
-deps/%/configure: deps
+deps/%/configure: deps/.submodules
 	cd $(@D) && autoreconf -fiv
 
 CONFIGURE_ARGS=

@@ -1,6 +1,7 @@
 # Set host to switch autotools into cross-compilation mode.
 host_alias=$($CC $CFLAGS -dumpmachine)
 # But it doesn't believe it's cross-compiling, because generated JS files are executable as if they were native.
+# So tell it explicitly.
 cross_compiling=yes
 # Ignore warnings about "using cross tools not prefixed with host triplet".
 # We could set custom tools prefix, but that would be redundant because we already
@@ -13,6 +14,9 @@ ac_tool_warned=yes
 prefix=$(em-config CACHE)/sysroot
 # Find the multiarch libdir which can vary depending on CFLAGS.
 libdir=$($CC $CFLAGS -print-search-dirs | grep -oP 'libraries: =\K(.*)' | tr ':' '\n' | grep "^$prefix")
+# Patch PKG_CONFIG_LIBDIR as emconfigure doesn't add the variant-specific sysroot libdir to the search list
+# because it doesn't know anything about CFLAGS.
+export PKG_CONFIG_LIBDIR=$libdir/pkgconfig:$PKG_CONFIG_LIBDIR
 # --with-sysroot is mainly used by libtool and libs that use it.
 with_sysroot=$prefix
 # Create cache file, but be careful to put it into a target-specific file.
