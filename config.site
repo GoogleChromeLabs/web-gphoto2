@@ -17,8 +17,6 @@ libdir=$($CC $CFLAGS -print-search-dirs | grep -oP 'libraries: =\K(.*)' | tr ':'
 # Patch PKG_CONFIG_LIBDIR as emconfigure doesn't add the variant-specific sysroot libdir to the search list
 # because it doesn't know anything about CFLAGS.
 export PKG_CONFIG_LIBDIR=$libdir/pkgconfig:$PKG_CONFIG_LIBDIR
-# --with-sysroot is mainly used by libtool and libs that use it.
-with_sysroot=$prefix
 # Create cache file, but be careful to put it into a target-specific file.
 cache_file="$prefix/var/$host_alias.cache"
 mkdir -p $(dirname $cache_file)

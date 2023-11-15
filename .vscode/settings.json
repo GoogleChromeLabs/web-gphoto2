@@ -18,6 +18,7 @@
     "*.ejs": "ejs",
     ".clang-tidy": "yaml",
     "*.wsb": "xml",
+    "*.site": "shellscript",
     "__bit_reference": "cpp",
     "__config": "cpp",
     "__debug": "cpp",
@@ -96,6 +97,8 @@
     "iostream": "cpp",
     "numbers": "cpp",
     "stop_token": "cpp",
-    "cinttypes": "cpp"
+    "cinttypes": "cpp",
+    "gphoto2.h": "c",
+    "library.h": "c"
   }
 }

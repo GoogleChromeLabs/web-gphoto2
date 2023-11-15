@@ -1,5 +1,4 @@
 export CONFIG_SITE := $(CURDIR)/config.site
-LIBDIR := $(shell em-config CACHE)/sysroot/lib
 
 # Common linking flags for all targets.
 export LDFLAGS += -s DYNAMIC_EXECUTION=0 -s AUTO_JS_LIBRARIES=0 -s AUTO_NATIVE_LIBRARIES=0
@@ -15,10 +14,11 @@ export LDFLAGS += $(COMMON_FLAGS)
 ## Main API module
 
 build/libapi.mjs: src/api.o deps/libgphoto2/.installed
-	libtool --verbose --mode=link $(LD) $(LDFLAGS) -o $@ $+ \
-		-fexceptions --bind -s ASYNCIFY -s ALLOW_MEMORY_GROWTH -s ENVIRONMENT=web \
-		-dlpreopen $(LIBDIR)/libgphoto2/2.5.28.1/ptp2.la \
-		-dlpreopen $(LIBDIR)/libgphoto2_port/0.12.0/usb1.la
+	libtool --tag=CC --verbose --mode=link --precious-files-regex '.*' $(LD) $(CFLAGS) $(LDFLAGS) -o $@ $< \
+		 -lltdl -lgphoto2 \
+		-fexceptions --bind -s ASYNCIFY -s ALLOW_MEMORY_GROWTH -s ENVIRONMENT=web,worker \
+		-dlpreopen $(PWD)/deps/libgphoto2/camlibs/ptp2.la \
+		-dlpreopen $(PWD)/deps/libgphoto2/libgphoto2_port/usb1.la
 
 src/api.o: CXXFLAGS += -std=c++17 -fexceptions
 
