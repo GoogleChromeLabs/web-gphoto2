@@ -1,9 +1,15 @@
 {
   "name": "web-gphoto2",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "WebAssembly implementation of gphoto2 and libusb to control DSLR cameras over USB on the Web",
   "exports": {
-    "import": "./build/camera.js"
+    ".": {
+      "types": "./build/camera.d.ts",
+      "node": "./build/camera.js",
+      "require": "./build/camera.js",
+      "import": "./build/camera.js",
+      "default": "./build/camera.js"
+    }
   },
   "module": "./build/camera.js",
   "browser": "./build/camera.js",
