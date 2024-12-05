@@ -49,7 +49,11 @@ $(SYSROOT)/lib/libltdl.la: deps/libtool/Makefile | $(SYSROOT)
 
 ## libusb
 
-deps/libusb/Makefile: CONFIGURE_ARGS = --host=wasm32
+deps/libusb/configure:
+	mkdir -p deps/libusb
+	curl -L https://github.com/libusb/libusb/releases/download/v1.0.27/libusb-1.0.27.tar.bz2 | tar jx --strip 1 -C deps/libusb
+
+deps/libusb/Makefile: CONFIGURE_ARGS = --host=wasm32-emscripten
 
 $(SYSROOT)/lib/libusb-1.0.la: deps/libusb/Makefile
 	$(MAKE) -C deps/libusb install
@@ -57,7 +61,7 @@ $(SYSROOT)/lib/libusb-1.0.la: deps/libusb/Makefile
 ## libgphoto2
 
 deps/libgphoto2/Makefile: | $(SYSROOT)/lib/libusb-1.0.la
-deps/libgphoto2/Makefile: CONFIGURE_ARGS = --host=wasm32 \
+deps/libgphoto2/Makefile: CONFIGURE_ARGS = --host=wasm32-emscripten \
 	--without-libxml-2.0 --disable-nls --disable-ptpip --disable-disk \
 	--with-camlibs=ptp2
 

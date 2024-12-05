@@ -2,6 +2,3 @@
 	path = deps/libgphoto2
 	url = https://github.com/RReverser/libgphoto2
 	branch = em
-[submodule "libusb"]
-	path = deps/libusb
-	url = https://github.com/libusb/libusb
