@@ -1,4 +1,4 @@
-FROM emscripten/emsdk:3.1.49
+FROM emscripten/emsdk:3.1.73
 RUN apt-get update && apt-get install -qqy autoconf autopoint pkg-config libtool libtool-bin
 WORKDIR /src
 CMD ["sh", "-c", "emmake make -j$(nproc)"]

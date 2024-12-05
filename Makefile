@@ -5,8 +5,6 @@ export LDFLAGS += -L$(SYSROOT)/lib
 
 # Common linking flags for all targets.
 export LDFLAGS += -s DYNAMIC_EXECUTION=0 -s AUTO_JS_LIBRARIES=0 -s AUTO_NATIVE_LIBRARIES=0
-# Temporary workaround for https://github.com/emscripten-core/emscripten/issues/16836.
-export LDFLAGS += -Wl,-u,ntohs
 
 # Common compilation & linking flags for all langs and targets.
 COMMON_FLAGS = -Os -flto
