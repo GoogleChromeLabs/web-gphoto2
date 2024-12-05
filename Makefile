@@ -17,8 +17,8 @@ export LDFLAGS += $(COMMON_FLAGS)
 build/libapi.mjs: src/api.o $(SYSROOT)/lib/libltdl.la $(SYSROOT)/lib/libgphoto2.la
 	libtool --verbose --mode=link $(LD) $(LDFLAGS) -o $@ $+ \
 		-fexceptions --bind -s ASYNCIFY -s ALLOW_MEMORY_GROWTH -s ENVIRONMENT=web,worker \
-		-dlpreopen $(SYSROOT)/lib/libgphoto2/2.5.28.1/ptp2.la \
-		-dlpreopen $(SYSROOT)/lib/libgphoto2_port/0.12.0/usb1.la
+		-dlpreopen $(SYSROOT)/lib/libgphoto2/2.5.31.1/ptp2.la \
+		-dlpreopen $(SYSROOT)/lib/libgphoto2_port/0.12.2/usb1.la
 
 src/api.o: deps/libgphoto2/configure.ac
 src/api.o: CPPFLAGS += -Ideps/libgphoto2 -Ideps/libgphoto2/libgphoto2_port
