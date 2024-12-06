@@ -130,9 +130,6 @@ class App extends Component {
     switch (state.type) {
       case 'CameraPicker':
         return h(
-          'div',
-          { class: 'center-parent' },
-          h(
             'div',
             {
               class: 'center'
@@ -158,15 +155,10 @@ class App extends Component {
                 'repo'
               ),
               '!'
-            )
           )
         );
       case 'Status':
-        return h(
-          'div',
-          { class: 'center-parent' },
-          h('div', { class: 'center' }, state.message)
-        );
+        return h('div', { class: 'center' }, state.message);
       case 'Config':
         return h(
           'div',
