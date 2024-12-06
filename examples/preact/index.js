@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-import { h, render, Component } from 'preact';
+import { h, hydrate, Component } from 'preact';
 import { CaptureButton } from './capture-button.js';
 import { Camera, rethrowIfCritical } from 'web-gphoto2';
 import { Preview } from './preview.js';
@@ -33,6 +33,9 @@ if (isDebug) {
 class App extends Component {
   /** @type {Camera | undefined} */
   camera;
+
+  // Make sure that first render hydrates the existing HTML smoothly.
+  state = { type: 'Status', message: '⌛ Loading...' };
 
   componentDidMount() {
     addEventListener('error', ({ message }) =>
@@ -52,7 +55,6 @@ class App extends Component {
     );
     // Try to connect to camera at startup.
     // If none is found among saved connections, it will fallback to a picker.
-    this.setState({ type: 'Status', message: '⌛ Loading...' });
     this.tryToConnectToCamera();
   }
 
@@ -130,7 +132,7 @@ class App extends Component {
     switch (state.type) {
       case 'CameraPicker':
         return h(
-            'div',
+          'div',
             {
               class: 'center'
             },
@@ -155,7 +157,7 @@ class App extends Component {
                 'repo'
               ),
               '!'
-          )
+            )
         );
       case 'Status':
         return h('div', { class: 'center' }, state.message);
@@ -201,4 +203,4 @@ class App extends Component {
   }
 }
 
-render(h(App, null), document.body);
+hydrate(h(App, null), document.body);
